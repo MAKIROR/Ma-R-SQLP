@@ -1,45 +1,16 @@
-pub enum Token {
-    // Keywords
-    Select,
-    From,
-    Where,
-    OrderBy,
-    // Operators
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    EqualTo,
-    NotEqualTo,
-    GreaterThan,
-    LessThan,
-    GreaterThanOrEqualTo,
-    LessThanOrEqualTo,
-    And,
-    Or,
-    Not,
-    Like,
-    In,
-    // Separators
-    Comma,
-    Dot,
-    LParen,
-    RParen,
-    Semicolon,
-    SingleQuote,
-    DoubleQuote,
-    LeftBracket,
-    RightBracket,
-    Backquote,
-    Backslash,
-    // Literals
+#[derive(Debug, PartialEq)]
+enum TokenType {
+    Keyword(String),
     Identifier(String),
-    StringLiteral(String),
-    IntLiteral(i32),
-    FloatLiteral(f32),
-    BoolLiteral(bool),
-    NullLiteral,
-    // Special Characters
-    Eof,
-    Invalid,
+    Num(String),
+    Comment(String),
+    Symbol(String),
+}
+
+fn is_keyword(text: &str) -> bool {
+    ["SELECT", "FROM", "WHERE", "AND", "OR", "NOT"].contains(&text)
+}
+
+fn is_symbol(text: char) -> bool {
+    [',', '(', ')', '=', '<', '>'].contains(&text)
 }
