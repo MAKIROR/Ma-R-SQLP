@@ -1,4 +1,4 @@
-use crate::tokens::*;
+use super::datatype::token::*;
 
 pub fn lex(text: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
@@ -27,13 +27,15 @@ pub fn lex(text: &str) -> Vec<Token> {
             }
             token if token.is_symbol() => {
                 let symbol = collect_until(&mut chars, |c| !c.is_symbol());
-                tokens.push(Token::Symbol(symbol));
+                if let Some(s) = symbol.as_symbol() {
+                    tokens.push(Token::Symbol(s));
+                }
                 chars.next();
             }
             _ => {
                 let text = collect_until(&mut chars, |c| !c.is_alphanumeric() && c != '_');
-                if text.is_keyword() {
-                    tokens.push(Token::Keyword(text));
+                if let Some(keyword) = text.as_keyword() {
+                    tokens.push(Token::Keyword(keyword));
                 } else {
                     tokens.push(Token::Identifier(text));
                 }
