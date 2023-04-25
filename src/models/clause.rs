@@ -1,4 +1,4 @@
-struct Table {
+pub struct Table {
     name: String,
-    columns: Vec<String>,
+    alias: Option<String>,
 }
