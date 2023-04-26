@@ -1,22 +1,19 @@
-use std::{
-    rc::{Rc,Weak},
-    cell::RefCell
-};
-use super::super::datatype::token::*;
+use super::structs::*;
 
 struct ASTNode {
-    node: Token,
+    node: NodeType,
     children: Vec<ASTNode>,
 }
 
 impl ASTNode {
-    pub fn new(node: Token) -> Self {
+    pub fn new(node: NodeType) -> Self {
         Self {
             node,
             children: Vec::new()
         }
     }
-    fn add_child(&mut self, node: ASTNode) {
+    
+    pub fn add_child(&mut self, node: ASTNode) {
         self.children.push(node);
     }
 } 
