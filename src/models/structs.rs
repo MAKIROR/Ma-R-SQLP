@@ -11,31 +11,31 @@ pub enum NodeType {
     },
 }
 
-struct Table {
+pub struct Table {
     pub name: String,
 }
 
-enum Expression {
+pub enum Expression {
     StringLiteral(String),
     NumericLiteral(i64),
     ColumnRef(ColumnRef),
 }
 
-struct Select {
+pub struct Select {
     pub distinct: bool,
     pub projections: Vec<Projection>,
 }
 
-enum Projection {
+pub enum Projection {
     AllColumns,
     ColumnName(String),
 }
 
-struct Filter {
+pub struct Filter {
     pub conditions: Vec<Condition>,
 }
 
-enum Condition {
+pub enum Condition {
     Comparison {
         left: ColumnRef,
         operator: String,
@@ -43,6 +43,6 @@ enum Condition {
     }
 }
 
-enum ColumnRef {
+pub enum ColumnRef {
     Named(String),
 }

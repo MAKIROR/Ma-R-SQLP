@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq)]
+use std::fmt;
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Keyword {
     Select,
     Insert,
@@ -119,5 +121,35 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
         }
         "OR" => Some(Keyword::Or),
         _ => None,
+    }
+}
+
+impl fmt::Display for Keyword {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Keyword::Select => write!(f, "SELECT"),
+            Keyword::Insert => write!(f, "INSERT"),
+            Keyword::Update => write!(f, "UPDATE"),
+            Keyword::Delete => write!(f, "DELETE"),
+            Keyword::From => write!(f, "FROM"),
+            Keyword::Where => write!(f, "WHERE"),
+            Keyword::GroupBy => write!(f, "GROUP BY"),
+            Keyword::OrderBy => write!(f, "ORDER BY"),
+            Keyword::Join => write!(f, "JOIN"),
+            Keyword::InnerJoin => write!(f, "INNER JOIN"),
+            Keyword::LeftJoin => write!(f, "LEFT JOIN"),
+            Keyword::RightJoin => write!(f, "RIGHT JOIN"),
+            Keyword::FullJoin => write!(f, "FULL JOIN"),
+            Keyword::On => write!(f, "ON"),
+            Keyword::As => write!(f, "AS"),
+            Keyword::Distinct => write!(f, "DISTINCT"),
+            Keyword::All => write!(f, "ALL"),
+            Keyword::Exists => write!(f, "EXISTS"),
+            Keyword::Having => write!(f, "HAVING"),
+            Keyword::Union => write!(f, "UNION"),
+            Keyword::Not => write!(f, "NOT"),
+            Keyword::And => write!(f, "AND"),
+            Keyword::Or => write!(f, "OR"),
+        }
     }
 }

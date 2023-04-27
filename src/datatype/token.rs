@@ -1,9 +1,10 @@
+use std::fmt;
 use super::{
     keyword::*,
     symbol::*,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Keyword(Keyword),
     Symbol(Symbol),
@@ -71,5 +72,17 @@ impl SqlStringExt for String {
             return Some(symbol)
         }
         None
+    }
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Token::Keyword(keyword) => write!(f, "{}", keyword),
+            Token::Symbol(symbol) => write!(f, "{}", symbol),
+            Token::Identifier(identifier) => write!(f, "{}", identifier),
+            Token::Num(num) => write!(f, "{}", num),
+            Token::Comment(comment) => write!(f, "{}", comment),
+        }
     }
 }

@@ -1,6 +1,6 @@
-use super::structs::*;
+use super::structs::NodeType;
 
-struct ASTNode {
+pub struct ASTNode {
     node: NodeType,
     children: Vec<ASTNode>,
 }
