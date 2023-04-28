@@ -8,6 +8,8 @@ pub enum ParseError {
     UnexpectedToken(Token),
     #[error("Missing token: '{0}'")]
     MissingToken(Token),
+    #[error("Syntax error: {0}")]
+    SyntaxError(String),
 }
 
 pub type Result<T> = std::result::Result<T, ParseError>;

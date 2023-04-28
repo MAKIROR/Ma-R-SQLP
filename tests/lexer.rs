@@ -3,9 +3,12 @@ use masql::statement_parse::*;
 
 #[test]
 fn test_lex() {
-    let result = lex("SELECT * FROM customers;");
+    let result = lex("SELECT * FROM customers WHERE age >= 21;");
     println!("{:?}", result);
-    if let Err(e) = parse_select(&result) {
+    let ast = parse_select(&result);
+    if let Err(e) = ast {
         println!("{}", e);
+    } else if let Ok(r) = ast {
+        println!("{:?}", r);
     }
 }
