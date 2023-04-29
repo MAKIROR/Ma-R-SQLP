@@ -15,22 +15,21 @@ pub fn lex(text: &str) -> Vec<Token> {
                 tokens.push(Token::Comment(comment));
             }
             '\'' | '"' => {
-                let quote = chars.next().unwrap();
-                let literal = collect_until(&mut chars, |c| c == quote);
-                tokens.push(Token::Identifier(literal));
-                chars.next();
+                if let Some(quote) = chars.next() {
+                    let literal = collect_until(&mut chars, |c| c == quote);
+                    tokens.push(Token::Identifier(literal));
+                    chars.next();
+                }
             }
             token if token.is_ascii_digit() => {
                 let num = collect_until(&mut chars, |c| !c.is_ascii_digit() && c != '.');
                 tokens.push(Token::Num(num));
-                chars.next();
             }
             token if token.is_symbol() => {
                 let symbol = collect_until(&mut chars, |c| !c.is_symbol());
                 if let Some(s) = symbol.as_symbol() {
                     tokens.push(Token::Symbol(s));
                 }
-                chars.next();
             }
             _ => {
                 let text = collect_until(&mut chars, |c| !c.is_alphanumeric() && c != '_');

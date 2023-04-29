@@ -49,6 +49,44 @@ pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
     Ok(node)
 }
 
+pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
+    let mut tokens = t.clone();
+    let mut iter = tokens.into_iter();
+    let mut column_names = Vec::new();   
+    let mut node = ASTNode::new(NodeType::Insert, None);
+
+    iter.next();
+    match iter.next() {
+        Some(Token::Keyword(Keyword::Into)) => (),
+        _ => return Err(ParseError::MissingToken(Token::Keyword(Keyword::Into)))
+    }
+
+    loop {
+        match iter.next() {
+            Some(Token::Identifier(name)) => column_names.push(name),
+            Some(Token::Symbol(_)) => continue,
+            Some(Token::Keyword(Keyword::From)) => break,
+            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
+            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From))) 
+        }
+    }
+
+    if let Some(Token::Symbol(Symbol::LeftParen)) = iter.next() {
+        iter.next();
+
+        loop {
+            match iter.next() {
+                Some(Token::Identifier(name)) => column_names.push(name.clone()),
+                Some(Token::Symbol(_)) => continue,
+                Some(Token::Symbol(Symbol::RightParen)) => break,
+                Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
+                None => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)))
+            }
+        }
+    }
+    Ok(node)
+}
+
 fn parse_condition(iter: &mut std::vec::IntoIter<Token>) -> Result<ASTNode> {
     let mut root = ASTNode::new(NodeType::Condition(Expression::new()), None);
 

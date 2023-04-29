@@ -11,6 +11,7 @@ pub enum Keyword {
     GroupBy,
     OrderBy,
     Join,
+    Into,
     InnerJoin,
     LeftJoin,
     RightJoin,
@@ -59,6 +60,7 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
             None
         }
         "JOIN" => Some(Keyword::Join),
+        "INTO" => Some(Keyword::Into),
         "INNER" => {
             if let Some(next) = s.split_whitespace().nth(1) {
                 if next.to_uppercase() == "JOIN" {
@@ -136,6 +138,7 @@ impl fmt::Display for Keyword {
             Keyword::GroupBy => write!(f, "GROUP BY"),
             Keyword::OrderBy => write!(f, "ORDER BY"),
             Keyword::Join => write!(f, "JOIN"),
+            Keyword::Into => write!(f, "INTO"),
             Keyword::InnerJoin => write!(f, "INNER JOIN"),
             Keyword::LeftJoin => write!(f, "LEFT JOIN"),
             Keyword::RightJoin => write!(f, "RIGHT JOIN"),

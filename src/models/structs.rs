@@ -3,6 +3,7 @@ use super::super::datatype::symbol::Symbol;
 #[derive(Debug, Clone)]
 pub enum NodeType {
     Select,
+    Insert,
     Table(String),
     Condition(Expression),
     Column(String),
@@ -56,14 +57,14 @@ pub struct Expression {
 impl Expression {
     pub fn new() -> Self {
         Self {
-            ops: vec![],
-            literals: vec![],
+            ops: Vec::new(),
+            literals: Vec::new(),
         }
     }
     pub fn new_with_symbol(ops: Vec<Symbol>) -> Self {
         Self {
             ops,
-            literals: vec![],
+            literals: Vec::new(),
         }
     }
 }

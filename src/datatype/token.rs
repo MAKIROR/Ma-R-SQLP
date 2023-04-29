@@ -18,6 +18,8 @@ where
     F: Fn(char) -> bool,
 {
     let mut result = String::new();
+
+
     while let Some(&c) = chars.peek() {
         if condition(c) {
             break;
