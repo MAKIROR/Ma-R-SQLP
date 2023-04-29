@@ -25,6 +25,10 @@ impl ASTNode {
         self.children.push(node);
     }
 
+    pub fn set_child(&mut self, mut node: Vec<ASTNode>) {
+        self.children = node;
+    }
+
     pub fn parent(&self) -> Option<Rc<RefCell<ASTNode>>> {
         self.parent.clone()
     }

@@ -4,9 +4,12 @@ use super::super::datatype::symbol::Symbol;
 pub enum NodeType {
     Select,
     Insert,
+    Values,
     Table(String),
     Condition(Expression),
     Column(String),
+    Value(String),
+    ColumnValue(String, String)
 }
 
 pub enum Statement {

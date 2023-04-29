@@ -16,6 +16,7 @@ pub enum Keyword {
     LeftJoin,
     RightJoin,
     FullJoin,
+    Values,
     On,
     As,
     Distinct,
@@ -105,6 +106,7 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
             }
             None
         }
+        "VALUES" =>Some(Keyword::Values),
         "ON" => Some(Keyword::On),
         "AS" => Some(Keyword::As),
         "DISTINCT" => Some(Keyword::Distinct),
@@ -143,6 +145,7 @@ impl fmt::Display for Keyword {
             Keyword::LeftJoin => write!(f, "LEFT JOIN"),
             Keyword::RightJoin => write!(f, "RIGHT JOIN"),
             Keyword::FullJoin => write!(f, "FULL JOIN"),
+            Keyword::Values => write!(f, "VALUES"),
             Keyword::On => write!(f, "ON"),
             Keyword::As => write!(f, "AS"),
             Keyword::Distinct => write!(f, "DISTINCT"),

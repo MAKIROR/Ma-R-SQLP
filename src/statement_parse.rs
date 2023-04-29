@@ -50,8 +50,8 @@ pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
 }
 
 pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
-    let mut tokens = t.clone();
-    let mut iter = tokens.into_iter();
+    let tokens = t.clone();
+    let mut iter = tokens.into_iter().peekable();
     let mut column_names = Vec::new();   
     let mut node = ASTNode::new(NodeType::Insert, None);
 
@@ -61,29 +61,61 @@ pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
         _ => return Err(ParseError::MissingToken(Token::Keyword(Keyword::Into)))
     }
 
-    loop {
-        match iter.next() {
-            Some(Token::Identifier(name)) => column_names.push(name),
-            Some(Token::Symbol(_)) => continue,
-            Some(Token::Keyword(Keyword::From)) => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From))) 
-        }
+    match iter.next() {
+        Some(Token::Identifier(name)) => {
+            node.add_child(ASTNode::new(NodeType::Table(name.clone()), None));
+        },
+        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
     }
 
-    if let Some(Token::Symbol(Symbol::LeftParen)) = iter.next() {
+    if let Some(Token::Symbol(Symbol::LeftParen)) = iter.peek() {
         iter.next();
-
         loop {
             match iter.next() {
                 Some(Token::Identifier(name)) => column_names.push(name.clone()),
-                Some(Token::Symbol(_)) => continue,
                 Some(Token::Symbol(Symbol::RightParen)) => break,
+                Some(Token::Symbol(_)) => continue,
                 Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
                 None => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)))
             }
         }
     }
+
+    match iter.next() {
+        Some(Token::Keyword(Keyword::Values)) => (),
+        _ => return Err(ParseError::MissingToken(Token::Keyword(Keyword::Values)))
+    }
+
+    match iter.next() {
+        Some(Token::Symbol(Symbol::LeftParen)) => (),
+        _ => return Err(ParseError::MissingToken(Token::Symbol(Symbol::LeftParen)))
+    }
+
+    let mut values = Vec::new();
+    loop {
+        match iter.next() {
+            Some(Token::Identifier(value)) | Some(Token::Num(value)) => values.push(value),
+            Some(Token::Symbol(Symbol::RightParen)) => break,
+            Some(Token::Symbol(_)) => continue,
+            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
+            None => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)))
+        }
+    }
+
+    if !column_names.is_empty() && column_names.len() != values.len() {
+        return Err(ParseError::IncorrectValueCount(column_names.len()));
+    }
+
+    let mut children = Vec::new();
+    for (i, value) in values.iter().enumerate() {
+        let child_type = if column_names.is_empty() {
+            NodeType::Value(value.clone())
+        } else {
+            NodeType::ColumnValue(column_names[i].clone(), value.clone())
+        };
+        children.push(ASTNode::new(child_type, None));
+    }
+    node.set_child(children);
     Ok(node)
 }
 

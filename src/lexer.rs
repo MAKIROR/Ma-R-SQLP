@@ -26,7 +26,7 @@ pub fn lex(text: &str) -> Vec<Token> {
                 tokens.push(Token::Num(num));
             }
             token if token.is_symbol() => {
-                let symbol = collect_until(&mut chars, |c| !c.is_symbol());
+                let symbol = collect_until(&mut chars, |c| !c.is_symbol() && c != ';');
                 if let Some(s) = symbol.as_symbol() {
                     tokens.push(Token::Symbol(s));
                 }
@@ -38,7 +38,6 @@ pub fn lex(text: &str) -> Vec<Token> {
                 } else {
                     tokens.push(Token::Identifier(text));
                 }
-                chars.next();
             }
         }
     }
