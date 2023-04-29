@@ -15,7 +15,7 @@ use super::{
 };
 
 pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
-    let mut tokens = t.clone();
+    let tokens = t.clone();
     let mut iter = tokens.into_iter();
     let mut column_names = Vec::new();   
     let mut node = ASTNode::new(NodeType::Select, None);
@@ -115,6 +115,7 @@ pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
         };
         children.push(ASTNode::new(child_type, None));
     }
+
     node.set_child(children);
     Ok(node)
 }
@@ -123,7 +124,6 @@ fn parse_condition(iter: &mut std::vec::IntoIter<Token>) -> Result<ASTNode> {
     let mut root = ASTNode::new(NodeType::Condition(Expression::new()), None);
 
     let mut current_node = &mut root;
-    let mut current_expr = &mut current_node.node;
     
     while let Some(token) = iter.next() {
         match token {
@@ -136,13 +136,9 @@ fn parse_condition(iter: &mut std::vec::IntoIter<Token>) -> Result<ASTNode> {
                         let node = ASTNode::new(NodeType::Condition(Expression::new()), None);
                         current_node.add_child(node);
                         current_node = current_node.children.last_mut().unwrap();
-                        current_expr = &mut current_node.node;
                     },
                     Symbol::RightParen => {
-                        if let Some(parent_node) = current_node.parent() {
-                            let mut parent_ast = parent_node.borrow_mut();
-                            let mut current_node = &mut parent_ast;
-                        } else {
+                        if let None = current_node.parent() {
                             return Err(ParseError::SyntaxError("unmatched right parenthesis.".to_string()));
                         }
                     },
@@ -163,7 +159,6 @@ fn parse_condition(iter: &mut std::vec::IntoIter<Token>) -> Result<ASTNode> {
                         );
                         current_node.add_child(node);
                         current_node = current_node.children.last_mut().unwrap();
-                        current_expr = &mut current_node.node;
                     },
                 }
             }

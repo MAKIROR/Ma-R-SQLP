@@ -25,7 +25,7 @@ impl ASTNode {
         self.children.push(node);
     }
 
-    pub fn set_child(&mut self, mut node: Vec<ASTNode>) {
+    pub fn set_child(&mut self, node: Vec<ASTNode>) {
         self.children = node;
     }
 
