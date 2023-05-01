@@ -4,6 +4,8 @@ use super::super::datatype::symbol::Symbol;
 pub enum NodeType {
     Select,
     Insert,
+    Delete,
+    Update,
     Values,
     Table(String),
     Condition(Expression),

@@ -20,7 +20,8 @@ pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
     let mut column_names = Vec::new();   
     let mut node = ASTNode::new(NodeType::Select, None);
 
-    iter.next();
+    match_token(&iter.next(), Token::Keyword(Keyword::Select))?;
+
     loop {
         match iter.next() {
             Some(Token::Identifier(name)) => column_names.push(name),
@@ -37,15 +38,14 @@ pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
         },
         _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
     }
-    
-    match iter.next() {
-        Some(Token::Keyword(Keyword::Where)) => {
-            let condition = parse_condition(&mut iter)?;
-            node.add_child(condition);
+
+    match parse_condition(&mut iter)? {
+        Some(c) => {
+            node.add_child(c);
         },
-        Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-        None => (),
-    }
+        None => ()
+    };
+    
     Ok(node)
 }
 
@@ -55,11 +55,8 @@ pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
     let mut column_names = Vec::new();   
     let mut node = ASTNode::new(NodeType::Insert, None);
 
-    iter.next();
-    match iter.next() {
-        Some(Token::Keyword(Keyword::Into)) => (),
-        _ => return Err(ParseError::MissingToken(Token::Keyword(Keyword::Into)))
-    }
+    match_token(&iter.next(), Token::Keyword(Keyword::Insert))?;
+    match_token(&iter.next(), Token::Keyword(Keyword::Into))?;
 
     match iter.next() {
         Some(Token::Identifier(name)) => {
@@ -81,15 +78,8 @@ pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
         }
     }
 
-    match iter.next() {
-        Some(Token::Keyword(Keyword::Values)) => (),
-        _ => return Err(ParseError::MissingToken(Token::Keyword(Keyword::Values)))
-    }
-
-    match iter.next() {
-        Some(Token::Symbol(Symbol::LeftParen)) => (),
-        _ => return Err(ParseError::MissingToken(Token::Symbol(Symbol::LeftParen)))
-    }
+    match_token(&iter.next(), Token::Keyword(Keyword::Values))?;
+    match_token(&iter.next(), Token::Symbol(Symbol::LeftParen))?;
 
     let mut values = Vec::new();
     loop {
@@ -120,8 +110,41 @@ pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
     Ok(node)
 }
 
-fn parse_condition(iter: &mut std::vec::IntoIter<Token>) -> Result<ASTNode> {
+pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
+    let tokens = t.clone();
+    let mut iter = tokens.into_iter();
+    let mut node = ASTNode::new(NodeType::Delete, None);
+
+    match_token(&iter.next(), Token::Keyword(Keyword::Delete))?;
+    match_token(&iter.next(), Token::Keyword(Keyword::Into))?;
+
+    match iter.next() {
+        Some(Token::Identifier(name)) => {
+            node.add_child(ASTNode::new(NodeType::Table(name.clone()), None));
+        },
+        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
+    }
+
+    match parse_condition(&mut iter)? {
+        Some(c) => {
+            node.add_child(c);
+        },
+        None => ()
+    };
+
+    Ok(node)
+}
+
+fn parse_condition(iter: &mut std::vec::IntoIter<Token>) -> Result<Option<ASTNode>> {
     let mut root = ASTNode::new(NodeType::Condition(Expression::new()), None);
+
+    match iter.next() {
+        Some(Token::Keyword(Keyword::Where)) => (),
+        None
+        | Some(Token::Symbol(Symbol::Semicolon))
+        | Some(Token::Symbol(Symbol::Comma))  => return Ok(None),
+        Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
+    }
 
     let mut current_node = &mut root;
     
@@ -183,5 +206,12 @@ fn parse_condition(iter: &mut std::vec::IntoIter<Token>) -> Result<ASTNode> {
             Token::Comment(_) => (),
         }
     }
-    Ok(root)
+    Ok(Some(root))
+}
+
+fn match_token(mut value: &Option<Token>, expect: Token) -> Result<()> {
+    return match value {
+        Some(token) => Ok(()),
+        None => return Err(ParseError::MissingToken(expect))
+    }
 }
