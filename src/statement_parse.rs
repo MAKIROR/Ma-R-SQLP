@@ -27,11 +27,8 @@ pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
     let mut node = ASTNode::new(NodeType::Select);
 
     match_token(&iter.next(), Token::Keyword(Keyword::Select))?;
+    node.add_child(parse_optional_args_or(&mut iter, vec![Arg::All, Arg::Distinct], Arg::All));
 
-    match iter.next() {
-        Some(Token::Keyword(Keyword::Distinct)) => node.add_arg(Arg::Distinct),
-        _ => node.add_arg(Arg::All),
-    }
 
     loop {
         match iter.next() {
@@ -224,24 +221,29 @@ fn match_token(mut value: &Option<Token>, expect: Token) -> Result<()> {
     }
 }
 
-/*
 fn parse_optional_args_or(
     iter: &mut Peekable<IntoIter<Token>>,
-    args: Vec<Arg>
-) -> Option<ASTNode> {
+    args: Vec<Arg>,
+    default: Arg,
+) -> ASTNode {
     match iter.peek() {
         Some(token) => {
-            let nodetype = args
-                .iter()
-                .find(|arg| **arg == token.clone())
-                .map(|arg| {
-                    iter.next();
-                    *arg
+            match token {
+                Token::Keyword(keyword) => {
+                    let arg_option: Option<Arg> = Option::from(keyword);
+                    match arg_option {
+                        Some(arg) => {
+                            if let Some(nodetype) = args.iter().find(|&a| a.clone() == arg) {
+                                return ASTNode::new_arg(nodetype.clone());
+                            }
+                            return ASTNode::new_arg(default)
+                        }
+                        None => ASTNode::new_arg(default),
+                    }
                 }
-            );
-            Some(new_arg(nodetype))
+                _ => ASTNode::new_arg(default),
+            }
         },
-        _ => None,
+        _ => ASTNode::new_arg(default),
     }
 }
- */

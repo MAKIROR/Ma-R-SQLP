@@ -33,7 +33,7 @@ impl ASTNode {
         self.new_child(NodeType::Arg(arg));
     }
 
-    pub fn new_arg(&mut self, arg: Arg) -> Self {
+    pub fn new_arg(arg: Arg) -> Self {
         ASTNode::new(NodeType::Arg(arg))
     }
 } 
