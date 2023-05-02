@@ -1,35 +1,39 @@
-use std::{
-    rc::Rc,
-    cell::RefCell,
+use super::{
+    structs::NodeType,
+    super::datatype::arg::Arg
 };
-use super::structs::NodeType;
 
 #[derive(Debug, Clone)]
 pub struct ASTNode {
     pub node: NodeType,
     pub children: Vec<ASTNode>,
-    parent: Option<Rc<RefCell<ASTNode>>>
 }
 
 impl ASTNode {
-    pub fn new(node: NodeType, parent: Option<Rc<RefCell<ASTNode>>>) -> Self {
+    pub fn new(node: NodeType) -> Self {
         Self {
             node,
             children: Vec::new(),
-            parent,
         }
     }
     
     pub fn add_child(&mut self, mut node: ASTNode) {
-        node.parent = Some(Rc::new(RefCell::new(self.clone())));
         self.children.push(node);
+    }
+
+    pub fn new_child(&mut self, mut node: NodeType) {
+        self.add_child(ASTNode::new(node));
     }
 
     pub fn set_child(&mut self, node: Vec<ASTNode>) {
         self.children = node;
     }
 
-    pub fn parent(&self) -> Option<Rc<RefCell<ASTNode>>> {
-        self.parent.clone()
+    pub fn add_arg(&mut self, arg: Arg) {
+        self.new_child(NodeType::Arg(arg));
+    }
+
+    pub fn new_arg(&mut self, arg: Arg) -> Self {
+        ASTNode::new(NodeType::Arg(arg))
     }
 } 

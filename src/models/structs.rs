@@ -1,4 +1,8 @@
-use super::super::datatype::symbol::Symbol;
+use super::super::datatype::{
+    keyword::Keyword,
+    symbol::Symbol,
+    arg::Arg,
+};
 
 #[derive(Debug, Clone)]
 pub enum NodeType {
@@ -7,6 +11,7 @@ pub enum NodeType {
     Delete,
     Update,
     Values,
+    Arg(Arg),
     Table(String),
     Condition(Expression),
     Column(String),
