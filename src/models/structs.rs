@@ -13,7 +13,6 @@ pub enum NodeType {
     Values,
     Arg(Arg),
     Table(String),
-    Condition(Expression),
     Column(String),
     Value(String),
     ColumnValue(String, String)
@@ -21,25 +20,20 @@ pub enum NodeType {
 
 pub enum Statement {
     SelectStatement {
-        select: Select,
+        distinct: bool,
+        projections: Projection,
         from: String,
         filter: Option<Filter>,
     },
     InsertStatement {
         table: String,
-        columns: Vec<String>,
-        values: Vec<Vec<Expression>>,
+        column_value: Vec<(String, String)>,
     },
-}
-
-pub struct Select {
-    pub distinct: bool,
-    pub projections: Vec<Projection>,
 }
 
 pub enum Projection {
     AllColumns,
-    ColumnName(String),
+    Columns(Vec<String>),
 }
 
 pub struct Filter {
@@ -47,15 +41,20 @@ pub struct Filter {
 }
 
 pub enum Condition {
+    And {
+        left: Box<Condition>,
+        right: Box<Condition>,
+    },
+    Or {
+        left: Box<Condition>,
+        right: Box<Condition>,
+    },
+    Not(Box<Condition>),
     Comparison {
-        left: ColumnRef,
-        operator: String,
+        left: String,
+        operator: Symbol,
         right: Expression,
     }
-}
-
-pub enum ColumnRef {
-    Named(String),
 }
 
 #[derive(Debug, Clone)]

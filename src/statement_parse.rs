@@ -8,10 +8,7 @@ use super::{
     datatype::token::*,
     models::{
         ast::*,
-        structs::{
-            NodeType,
-            Expression,
-        },
+        structs::*,
     },
     datatype::{
         keyword::Keyword,
@@ -23,34 +20,13 @@ use super::{
 pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
     let tokens = t.clone();
     let mut iter = tokens.into_iter().peekable();
-    let mut column_names = Vec::new();   
     let mut node = ASTNode::new(NodeType::Select);
 
     match_token(&iter.next(), Token::Keyword(Keyword::Select))?;
-    node.add_child(parse_optional_args_or(&mut iter, vec![Arg::All, Arg::Distinct], Arg::All));
-
-
-    loop {
-        match iter.next() {
-            Some(Token::Identifier(name)) => column_names.push(name),
-            Some(Token::Symbol(_)) => continue,
-            Some(Token::Keyword(Keyword::From)) => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From))) 
-        }
-    }
-
-    match iter.next() {
-        Some(Token::Identifier(name)) => node.new_child(NodeType::Table(name)),
-        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
-    }
-
-    match parse_condition(&mut iter)? {
-        Some(c) => {
-            node.add_child(c);
-        },
-        None => ()
-    };
+    let distinct = parse_optional_args_or(&mut iter, vec![Arg::All, Arg::Distinct], Arg::All);
+    let projection = parse_projection(&mut iter)?;
+    let from = parse_table(&mut iter)?;
+    let filter = match parse_condition(&mut iter)?;
     
     Ok(node)
 }
@@ -113,9 +89,7 @@ pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
     Ok(node)
 }
 
-fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<ASTNode>> {
-    let mut root = ASTNode::new(NodeType::Condition(Expression::new()));
-
+fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filter>> {
     match iter.next() {
         Some(Token::Keyword(Keyword::Where)) => (),
         None
@@ -124,8 +98,8 @@ fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<ASTNod
         Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
     }
 
-    let mut current_node = &mut root;
     let mut paren = VecDeque::new();
+    let mut conditions = Vec::new();
     
     while let Some(token) = iter.next() {
         match token {
@@ -135,9 +109,8 @@ fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<ASTNod
             Token::Symbol(sym) => {
                 match sym {
                     Symbol::LeftParen => {
-                        let node = ASTNode::new(NodeType::Condition(Expression::new()));
-                        current_node.add_child(node);
-                        current_node = current_node.children.last_mut().unwrap();
+                        let condition = Expression::new();
+                        conditions.push(condition)
                         paren.push_back(Symbol::LeftParen);
                     },
                     Symbol::RightParen => {
@@ -152,15 +125,7 @@ fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<ASTNod
                     | Symbol::Slash
                     | Symbol::Percent => return Err(ParseError::UnexpectedToken(Token::Symbol(sym.clone()))),
                     s => {
-                        let node = ASTNode::new(
-                            NodeType::Condition(
-                                Expression::new_with_symbol(
-                                    vec![s]
-                                )
-                            )
-                        );
-                        current_node.add_child(node);
-                        current_node = current_node.children.last_mut().unwrap();
+                        let expression = Expression::new_with_symbol(vec![s]);
                     },
                 }
             }
@@ -185,7 +150,10 @@ fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<ASTNod
             Token::Comment(_) => (),
         }
     }
-    Ok(Some(root))
+}
+
+fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condition>> {
+
 }
 
 fn parse_column(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>> {
@@ -207,17 +175,37 @@ fn parse_column(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>> {
             },
             Some(Token::Symbol(_)) => continue,
             Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)))
+            None => {
+                if Some(Symbol::LeftParen) == paren.pop_back() {
+                    return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)))
+                }
+                break;
+            }
         }
     }
     Ok(values)
-
 }
 
-fn match_token(mut value: &Option<Token>, expect: Token) -> Result<()> {
-    return match value {
-        Some(token) => Ok(()),
-        None => return Err(ParseError::MissingToken(expect))
+fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Projection> {
+    let mut column_names = Vec::new();   
+
+    loop {
+        match iter.next() {
+            Some(Token::Identifier(name)) => column_names.push(name),
+            Some(Token::Symbol(Symbol::Asterisk)) => return Ok(Projection::AllColumns),
+            Some(Token::Symbol(_)) => continue,
+            Some(Token::Keyword(Keyword::From)) => break,
+            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
+            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From))) 
+        }
+    }
+    return Ok(Projection::Columns(column_names));
+}
+
+fn parse_table(iter: &mut Peekable<IntoIter<Token>>) -> Result<String> {
+    match iter.next() {
+        Some(Token::Identifier(name)) => return Ok(name),
+        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
     }
 }
 
@@ -225,25 +213,20 @@ fn parse_optional_args_or(
     iter: &mut Peekable<IntoIter<Token>>,
     args: Vec<Arg>,
     default: Arg,
-) -> ASTNode {
-    match iter.peek() {
-        Some(token) => {
-            match token {
-                Token::Keyword(keyword) => {
-                    let arg_option: Option<Arg> = Option::from(keyword);
-                    match arg_option {
-                        Some(arg) => {
-                            if let Some(nodetype) = args.iter().find(|&a| a.clone() == arg) {
-                                return ASTNode::new_arg(nodetype.clone());
-                            }
-                            return ASTNode::new_arg(default)
-                        }
-                        None => ASTNode::new_arg(default),
-                    }
-                }
-                _ => ASTNode::new_arg(default),
+) -> Arg {
+    if let Some(Token::Keyword(keyword)) = iter.peek() {
+        if let Some(arg) = Option::from(keyword) {
+            if let Some(nodetype) = args.iter().find(|&a| a.clone() == arg) {
+                return nodetype.clone();
             }
-        },
-        _ => ASTNode::new_arg(default),
+        }
+    }
+    default
+}
+
+fn match_token(mut value: &Option<Token>, expect: Token) -> Result<()> {
+    return match value {
+        Some(token) => Ok(()),
+        None => return Err(ParseError::MissingToken(expect))
     }
 }
