@@ -26,7 +26,7 @@ pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
     let distinct = parse_optional_args_or(&mut iter, vec![Arg::All, Arg::Distinct], Arg::All);
     let projection = parse_projection(&mut iter)?;
     let from = parse_table(&mut iter)?;
-    let filter = match parse_condition(&mut iter)?;
+    let filter = parse_conditions(&mut iter)?;
     
     Ok(node)
 }
@@ -79,9 +79,9 @@ pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
         _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
     }
 
-    match parse_condition(&mut iter)? {
+    match parse_conditions(&mut iter)? {
         Some(c) => {
-            node.add_child(c);
+            // todo
         },
         None => ()
     };
@@ -92,17 +92,25 @@ pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
 fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filter>> {
     match iter.next() {
         Some(Token::Keyword(Keyword::Where)) => (),
-        None
-        | Some(Token::Symbol(Symbol::Semicolon))
-        | Some(Token::Symbol(Symbol::Comma))  => return Ok(None),
-        Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
+        _  => return Ok(None),
     }
 
     let mut paren = VecDeque::new();
     let mut conditions = Vec::new();
+    let mut conditions_stack: Vec<Condition> = Vec::new();
+    let mut current_expression = Expression::new();
     
     while let Some(token) = iter.next() {
         match token {
+            Token::Keyword(Keyword::All) => {
+                //todo
+            },
+            Token::Keyword(Keyword::Or) => {
+                //todo
+            },
+            Token::Keyword(Keyword::Not) => {
+                //todo
+            },
             Token::Keyword(_) => {
                 return Err(ParseError::UnexpectedToken(token.clone()));
             }
@@ -110,7 +118,6 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
                 match sym {
                     Symbol::LeftParen => {
                         let condition = Expression::new();
-                        conditions.push(condition)
                         paren.push_back(Symbol::LeftParen);
                     },
                     Symbol::RightParen => {
@@ -118,7 +125,7 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
                             return Err(ParseError::UnexpectedToken(Token::Symbol(Symbol::RightParen)));
                         }
                     },
-                    Symbol::Comma 
+                    Symbol::Comma
                     | Symbol::Dot
                     | Symbol::Plus
                     | Symbol::Minus
@@ -130,19 +137,11 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
                 }
             }
             Token::Identifier(s) => {
-                match current_node.node {
-                    NodeType::Condition(_) => {
-                        current_node.new_child(NodeType::Column(s));
-                    }
-                    _ => {
-                        println!("{:?}", current_node);
-                        return Err(ParseError::UnexpectedToken(Token::Identifier(s.clone())));
-                    }
-                }
+                // to change
             }
             Token::Num(n) => {
-                if let NodeType::Condition(ref mut expr) = current_node.node {
-                    expr.literals.push(n);
+                if current_expression.needs_literal() {
+                    current_expression.literals.push(n);
                 } else {
                     return Err(ParseError::UnexpectedToken(Token::Num(n.clone())));
                 }
@@ -150,10 +149,35 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
             Token::Comment(_) => (),
         }
     }
+
+    return Ok(Some(Filter { conditions }));
 }
 
-fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condition>> {
-
+fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Expression>> {
+    while let Some(token) = iter.next() {
+        if expression.is_valid() {
+            break;
+        }
+        match token {
+            Token::Num(ref s) | Token::Identifier(ref s) => {
+                //todo
+            }
+            Token::Symbol(Symbol::LeftParen) => {
+                if let Some(next_expr) = parse_next_expression(iter)? {
+                    
+                };
+                return Err
+            }
+            Token::Symbol(s) => {
+                if !s.is_operator() {
+                    return Err(ParseError::UnexpectedToken(token.clone()));
+                }
+                //todo
+            }
+            //todo
+            _ => return Err(ParseError::UnexpectedToken(token.clone())),
+        }
+    }
 }
 
 fn parse_column(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>> {
@@ -196,7 +220,7 @@ fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Projection> 
             Some(Token::Symbol(_)) => continue,
             Some(Token::Keyword(Keyword::From)) => break,
             Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From))) 
+            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From)))
         }
     }
     return Ok(Projection::Columns(column_names));

@@ -11,9 +11,8 @@ pub enum NodeType {
     Delete,
     Update,
     Values,
-    Arg(Arg),
-    Table(String),
-    Column(String),
+    Symbol(Symbol),
+    Identifier(String),
     Value(String),
     ColumnValue(String, String)
 }
@@ -59,21 +58,17 @@ pub enum Condition {
 
 #[derive(Debug, Clone)]
 pub struct Expression {
-    pub ops: Vec<Symbol>,
-    pub literals: Vec<String>,
+    pub ast: ASTNode,
 }
 
 impl Expression {
-    pub fn new() -> Self {
+    pub fn new(s: Symbol) -> Self {
         Self {
-            ops: Vec::new(),
-            literals: Vec::new(),
+            ast: ASTNode::new(NodeType::Symbol(s))
         }
     }
-    pub fn new_with_symbol(ops: Vec<Symbol>) -> Self {
-        Self {
-            ops,
-            literals: Vec::new(),
-        }
+
+    pub fn add_child(&mut self, mut node: ASTNode) {
+        self.ast.children.push(node);
     }
 }

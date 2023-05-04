@@ -20,6 +20,23 @@ pub enum Symbol {
     Semicolon,
 }
 
+impl Symbol {
+    pub fn is_operator(&self) -> bool {
+        match self {
+            Symbol::Comma
+            | Symbol::Dot
+            | Symbol::Asterisk
+            | Symbol::Plus
+            | Symbol::Minus
+            | Symbol::Slash
+            | Symbol::Percent
+            | Symbol::LeftParen
+            | Symbol::RightParen => true,
+            _ => false,
+        }
+    }
+}
+
 pub fn parse_symbol(s: &str) -> Option<Symbol> {
     match s {
         "," => Some(Symbol::Comma),
