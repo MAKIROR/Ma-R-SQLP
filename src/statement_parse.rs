@@ -75,7 +75,7 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
     let mut left_node: Option<Expression> = None;
     let mut operator: Option<Symbol> = None;
 
-    while let Some(token) = iter.next() {
+    while let Some(token) = iter.peek() {
         if left_node.is_some() && operator.is_none() && !token.is_operator() {
             break;
         }
@@ -83,13 +83,11 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
             Token::Num(ref s) | Token::Identifier(ref s) => {
                 if let Some(op) = operator {
                     let right_node = ASTNode::default(NodeType::Identifier(s.clone()));
-                    if let Some(n) = left_node {
-                        left_node = Some(Expression::new_with_node(
-                            n.ast, 
-                            op,
-                            right_node
-                        ));
-                    }
+                    left_node = Some(Expression::new(
+                        left_node.take().unwrap().ast, 
+                        op,
+                        right_node
+                    ));
                     operator = None;
                 } else {
                     left_node = Some(Expression::new_with_ast(ASTNode::default(NodeType::Identifier(s.clone()))));
@@ -99,9 +97,11 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
                 let next_expr = parse_next_expression(iter)?;
                 if let Some(op) = operator {
                     let right_node = next_expr;
-                    if let Some(n) = left_node {
-                        left_node = Some(Expression::new(n, op, right_node));
-                    }
+                    left_node = Some(Expression::new(
+                        left_node.take().unwrap().ast,
+                        op,
+                        right_node.ast
+                    ));
                     operator = None;
                 } else {
                     left_node = Some(next_expr);
@@ -113,24 +113,30 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
                 }
             }
             Token::Symbol(ref s) => {
-                iter.next();
                 if !s.is_operator() || operator.is_some() {
                     return Err(ParseError::UnexpectedToken(token.clone()));
                 }
                 operator = Some(s.clone());
             }
             Token::Keyword(k) => {
-                break;
+                if let Some(n) = left_node {
+                    if operator.is_none() {
+                        return Ok(n);
+                    }
+                }
+                return Err(ParseError::IncorrectExpression);
             }
-            // TODO:
             _ => return Err(ParseError::UnexpectedToken(token.clone())),
         }
     }
 
-    if let Some(n) = left_node {
-        return Ok(n);
-    }
+    iter.next();
 
+    if let Some(n) = left_node {
+        if operator.is_none() {
+            return Ok(n);
+        }
+    }
     return Err(ParseError::IncorrectExpression);
 }
 

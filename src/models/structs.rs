@@ -52,17 +52,7 @@ pub struct Expression {
 }
 
 impl Expression {
-    pub fn new(left: Expression, symbol: Symbol, right: Expression) -> Self {
-        Self { 
-            ast: ASTNode::new(
-                NodeType::Symbol(symbol),
-                Some(Box::new(left.ast)),
-                Some(Box::new(right.ast))
-            )
-        }
-    }
-
-    pub fn new_with_node(left: ASTNode, symbol: Symbol, right: ASTNode) -> Self {
+    pub fn new(left: ASTNode, symbol: Symbol, right: ASTNode) -> Self {
         Self { 
             ast: ASTNode::new(
                 NodeType::Symbol(symbol),
