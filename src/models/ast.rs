@@ -1,39 +1,63 @@
-use super::{
-    structs::NodeType,
-    super::datatype::arg::Arg
+use super::super::datatype::{
+    symbol::Symbol,
+    arg::Arg,
 };
+
+#[derive(Debug, Clone)]
+pub enum NodeType {
+    Select,
+    Insert,
+    Delete,
+    Update,
+    Values,
+    Arg(Arg),
+    Symbol(Symbol),
+    Identifier(String),
+    Value(String),
+    ColumnValue(String, String)
+}
 
 #[derive(Debug, Clone)]
 pub struct ASTNode {
     pub node: NodeType,
-    pub children: Vec<ASTNode>,
+    pub left: Option<Box<ASTNode>>,
+    pub right: Option<Box<ASTNode>>,
 }
 
 impl ASTNode {
-    pub fn new(node: NodeType) -> Self {
+    pub fn default(node: NodeType) -> Self {
         Self {
             node,
-            children: Vec::new(),
+            left: None,
+            right: None,
+        }
+    }
+
+    pub fn new(
+        node: NodeType,
+        left: Option<Box<ASTNode>>,
+        right: Option<Box<ASTNode>>
+    ) -> Self {
+        Self {
+            node,
+            left,
+            right,
         }
     }
     
-    pub fn add_child(&mut self, mut node: ASTNode) {
-        self.children.push(node);
+    pub fn set_left(&mut self, mut node: ASTNode) {
+        self.left = Some(Box::new(node));
     }
 
-    pub fn new_child(&mut self, mut node: NodeType) {
-        self.add_child(ASTNode::new(node));
+    pub fn new_left(&mut self, mut node: NodeType) {
+        self.left = Some(Box::new(ASTNode::default(node)));
     }
 
-    pub fn set_child(&mut self, node: Vec<ASTNode>) {
-        self.children = node;
+    pub fn set_right(&mut self, mut node: ASTNode) {
+        self.right = Some(Box::new(node));
     }
 
-    pub fn add_arg(&mut self, arg: Arg) {
-        self.new_child(NodeType::Arg(arg));
-    }
-
-    pub fn new_arg(arg: Arg) -> Self {
-        ASTNode::new(NodeType::Arg(arg))
+    pub fn new_right(&mut self, mut node: NodeType) {
+        self.right = Some(Box::new(ASTNode::default(node)));
     }
 } 

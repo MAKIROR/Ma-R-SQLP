@@ -18,75 +18,18 @@ use super::{
 };
 
 pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
-    let tokens = t.clone();
-    let mut iter = tokens.into_iter().peekable();
-    let mut node = ASTNode::new(NodeType::Select);
-
-    match_token(&iter.next(), Token::Keyword(Keyword::Select))?;
-    let distinct = parse_optional_args_or(&mut iter, vec![Arg::All, Arg::Distinct], Arg::All);
-    let projection = parse_projection(&mut iter)?;
-    let from = parse_table(&mut iter)?;
-    let filter = parse_conditions(&mut iter)?;
-    
-    Ok(node)
+   // TODO:
+   todo!()
 }
 
 pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
-    let tokens = t.clone();
-    let mut iter = tokens.into_iter().peekable();
-    let mut node = ASTNode::new(NodeType::Insert);
-
-    match_token(&iter.next(), Token::Keyword(Keyword::Insert))?;
-    match_token(&iter.next(), Token::Keyword(Keyword::Into))?;
-
-    match iter.next() {
-        Some(Token::Identifier(name)) => node.new_child(NodeType::Table(name.clone())),
-        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
-    }
-
-    let column_names = parse_column(&mut iter)?;
-    match_token(&iter.next(), Token::Keyword(Keyword::Values))?;
-    let values = parse_column(&mut iter)?;
-
-    if !column_names.is_empty() && column_names.len() != values.len() {
-        return Err(ParseError::IncorrectValueCount(column_names.len()));
-    }
-
-    let mut children = Vec::new();
-    for (i, value) in values.iter().enumerate() {
-        let child_type = if column_names.is_empty() {
-            NodeType::Value(value.clone())
-        } else {
-            NodeType::ColumnValue(column_names[i].clone(), value.clone())
-        };
-        children.push(ASTNode::new(child_type));
-    }
-
-    node.set_child(children);
-    Ok(node)
+   todo!()
+   // TODO:
 }
 
 pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
-    let tokens = t.clone();
-    let mut iter = tokens.into_iter().peekable();
-    let mut node = ASTNode::new(NodeType::Delete);
-
-    match_token(&iter.next(), Token::Keyword(Keyword::Delete))?;
-    match_token(&iter.next(), Token::Keyword(Keyword::Into))?;
-
-    match iter.next() {
-        Some(Token::Identifier(name)) => node.new_child(NodeType::Table(name.clone())),
-        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
-    }
-
-    match parse_conditions(&mut iter)? {
-        Some(c) => {
-            // todo
-        },
-        None => ()
-    };
-
-    Ok(node)
+   todo!()
+   // TODO:
 }
 
 fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filter>> {
@@ -95,56 +38,31 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
         _  => return Ok(None),
     }
 
-    let mut paren = VecDeque::new();
     let mut conditions = Vec::new();
     let mut conditions_stack: Vec<Condition> = Vec::new();
-    let mut current_expression = Expression::new();
     
     while let Some(token) = iter.next() {
         match token {
             Token::Keyword(Keyword::All) => {
-                //todo
+                // TODO:
             },
             Token::Keyword(Keyword::Or) => {
-                //todo
+                // TODO:
             },
             Token::Keyword(Keyword::Not) => {
-                //todo
+                // TODO:
             },
             Token::Keyword(_) => {
                 return Err(ParseError::UnexpectedToken(token.clone()));
             }
             Token::Symbol(sym) => {
-                match sym {
-                    Symbol::LeftParen => {
-                        let condition = Expression::new();
-                        paren.push_back(Symbol::LeftParen);
-                    },
-                    Symbol::RightParen => {
-                        if Some(Symbol::LeftParen) != paren.pop_back() {
-                            return Err(ParseError::UnexpectedToken(Token::Symbol(Symbol::RightParen)));
-                        }
-                    },
-                    Symbol::Comma
-                    | Symbol::Dot
-                    | Symbol::Plus
-                    | Symbol::Minus
-                    | Symbol::Slash
-                    | Symbol::Percent => return Err(ParseError::UnexpectedToken(Token::Symbol(sym.clone()))),
-                    s => {
-                        let expression = Expression::new_with_symbol(vec![s]);
-                    },
-                }
+                // TODO:
             }
             Token::Identifier(s) => {
-                // to change
+                // TODO:
             }
             Token::Num(n) => {
-                if current_expression.needs_literal() {
-                    current_expression.literals.push(n);
-                } else {
-                    return Err(ParseError::UnexpectedToken(Token::Num(n.clone())));
-                }
+                // TODO:
             }
             Token::Comment(_) => (),
         }
@@ -153,31 +71,67 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
     return Ok(Some(Filter { conditions }));
 }
 
-fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Expression>> {
+fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
+    let mut left_node: Option<Expression> = None;
+    let mut operator: Option<Symbol> = None;
+
     while let Some(token) = iter.next() {
-        if expression.is_valid() {
+        if left_node.is_some() && operator.is_none() && !token.is_operator() {
             break;
         }
         match token {
             Token::Num(ref s) | Token::Identifier(ref s) => {
-                //todo
+                if let Some(op) = operator {
+                    let right_node = ASTNode::default(NodeType::Identifier(s.clone()));
+                    if let Some(n) = left_node {
+                        left_node = Some(Expression::new_with_node(
+                            n.ast, 
+                            op,
+                            right_node
+                        ));
+                    }
+                    operator = None;
+                } else {
+                    left_node = Some(Expression::new_with_ast(ASTNode::default(NodeType::Identifier(s.clone()))));
+                }
             }
             Token::Symbol(Symbol::LeftParen) => {
-                if let Some(next_expr) = parse_next_expression(iter)? {
-                    
-                };
-                return Err
+                let next_expr = parse_next_expression(iter)?;
+                if let Some(op) = operator {
+                    let right_node = next_expr;
+                    if let Some(n) = left_node {
+                        left_node = Some(Expression::new(n, op, right_node));
+                    }
+                    operator = None;
+                } else {
+                    left_node = Some(next_expr);
+                }
+                match iter.next() {
+                    Some(Token::Symbol(Symbol::RightParen)) => (),
+                    Some(t) => return Err(ParseError::UnexpectedToken(t)),
+                    None => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen))),
+                }
             }
-            Token::Symbol(s) => {
-                if !s.is_operator() {
+            Token::Symbol(ref s) => {
+                iter.next();
+                if !s.is_operator() || operator.is_some() {
                     return Err(ParseError::UnexpectedToken(token.clone()));
                 }
-                //todo
+                operator = Some(s.clone());
             }
-            //todo
+            Token::Keyword(k) => {
+                break;
+            }
+            // TODO:
             _ => return Err(ParseError::UnexpectedToken(token.clone())),
         }
     }
+
+    if let Some(n) = left_node {
+        return Ok(n);
+    }
+
+    return Err(ParseError::IncorrectExpression);
 }
 
 fn parse_column(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>> {

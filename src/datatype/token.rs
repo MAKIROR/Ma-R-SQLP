@@ -88,3 +88,20 @@ impl fmt::Display for Token {
         }
     }
 }
+
+impl Token {
+    pub fn is_operator(&self) -> bool {
+        match self {
+            Token::Symbol(Symbol::Comma)
+            | Token::Symbol(Symbol::Dot)
+            | Token::Symbol(Symbol::Asterisk)
+            | Token::Symbol(Symbol::Plus)
+            | Token::Symbol(Symbol::Minus)
+            | Token::Symbol(Symbol::Slash)
+            | Token::Symbol(Symbol::Percent)
+            | Token::Symbol(Symbol::LeftParen)
+            | Token::Symbol(Symbol::RightParen) => true,
+            _ => false,
+        }
+    }
+}

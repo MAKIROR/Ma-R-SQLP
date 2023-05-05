@@ -1,21 +1,11 @@
-use super::super::datatype::{
-    keyword::Keyword,
-    symbol::Symbol,
-    arg::Arg,
+use super::{
+    super::datatype::{
+        keyword::Keyword,
+        symbol::Symbol,
+        arg::Arg,
+    },
+    ast::*,
 };
-
-#[derive(Debug, Clone)]
-pub enum NodeType {
-    Select,
-    Insert,
-    Delete,
-    Update,
-    Values,
-    Symbol(Symbol),
-    Identifier(String),
-    Value(String),
-    ColumnValue(String, String)
-}
 
 pub enum Statement {
     SelectStatement {
@@ -62,13 +52,33 @@ pub struct Expression {
 }
 
 impl Expression {
-    pub fn new(s: Symbol) -> Self {
-        Self {
-            ast: ASTNode::new(NodeType::Symbol(s))
+    pub fn new(left: Expression, symbol: Symbol, right: Expression) -> Self {
+        Self { 
+            ast: ASTNode::new(
+                NodeType::Symbol(symbol),
+                Some(Box::new(left.ast)),
+                Some(Box::new(right.ast))
+            )
         }
     }
 
-    pub fn add_child(&mut self, mut node: ASTNode) {
-        self.ast.children.push(node);
+    pub fn new_with_node(left: ASTNode, symbol: Symbol, right: ASTNode) -> Self {
+        Self { 
+            ast: ASTNode::new(
+                NodeType::Symbol(symbol),
+                Some(Box::new(left)),
+                Some(Box::new(right))
+            )
+        }
+    }
+
+    pub fn new_with_ast(ast: ASTNode) -> Self {
+        Self { ast }
+    }
+
+    pub fn new_with_symbol(s: Symbol) -> Self {
+        Self {
+            ast: ASTNode::default(NodeType::Symbol(s))
+        }
     }
 }
