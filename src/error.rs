@@ -13,6 +13,9 @@ pub enum ParseError {
     #[error("Missing token: '{0}'")]
     MissingToken(Token),
 
+    #[error("Missing comparator")]
+    MissingComparator,
+
     #[error("Syntax error: {0}")]
     SyntaxError(String),
 

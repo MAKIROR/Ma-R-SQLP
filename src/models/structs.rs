@@ -29,6 +29,7 @@ pub struct Filter {
     pub conditions: Vec<Condition>,
 }
 
+#[derive(Debug, Clone)]
 pub enum Condition {
     And {
         left: Box<Condition>,

@@ -39,30 +39,54 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
     }
 
     let mut conditions = Vec::new();
-    let mut conditions_stack: Vec<Condition> = Vec::new();
-    
-    while let Some(token) = iter.next() {
+    let mut last_condition = parse_condition(iter)?;
+
+    conditions.push(last_condition.clone());
+
+    while let Some(token) = iter.peek().cloned() {
         match token {
-            Token::Keyword(Keyword::All) => {
-                // TODO:
+            Token::Keyword(Keyword::And) => {
+                iter.next();
+                let next_condition = parse_condition(iter)?;
+                last_condition = Condition::And {
+                    left: Box::new(last_condition.clone()),
+                    right: Box::new(next_condition)
+                };
+                conditions.pop();
+                conditions.push(last_condition.clone());
             },
             Token::Keyword(Keyword::Or) => {
-                // TODO:
+                iter.next();
+                let next_condition = parse_condition(iter)?;
+                last_condition = Condition::Or {
+                    left: Box::new(last_condition.clone()),
+                    right: Box::new(next_condition)
+                };
+                conditions.pop();
+                conditions.push(last_condition.clone());
             },
             Token::Keyword(Keyword::Not) => {
-                // TODO:
+                iter.next();
+                let next_condition = parse_condition(iter)?;
+                last_condition = Condition::Not(Box::new(next_condition));
+                conditions.pop();
+                conditions.push(last_condition.clone());
             },
-            Token::Keyword(_) => {
+            Token::Symbol(Symbol::LeftParen) => {
+                iter.next();
+                last_condition = parse_condition(iter)?;
+                if let Some(Token::Symbol(Symbol::RightParen)) = iter.next() {
+                    conditions.push(last_condition.clone());
+                } else {
+                    return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)));
+                }
+            }
+            Token::Keyword(_) | Token::Symbol(_) | Token::Num(_) => {
                 return Err(ParseError::UnexpectedToken(token.clone()));
             }
-            Token::Symbol(sym) => {
-                // TODO:
-            }
             Token::Identifier(s) => {
-                // TODO:
-            }
-            Token::Num(n) => {
-                // TODO:
+                last_condition = parse_condition(iter)?;
+                conditions.push(last_condition.clone());
             }
             Token::Comment(_) => (),
         }
@@ -71,40 +95,64 @@ fn parse_conditions(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Filte
     return Ok(Some(Filter { conditions }));
 }
 
+fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
+    let left = match iter.peek() {
+        Some(Token::Identifier(ref s)) => s.clone(),
+        Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
+        None => return Err(ParseError::MissingComparator),
+    };
+    iter.next();
+    let operator = match iter.next() {
+        Some(Token::Symbol(t)) if t.is_comparator() => t,
+        Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
+        None => return Err(ParseError::MissingComparator),
+    };
+
+    let right = parse_next_expression(iter)?;
+
+    Ok(
+        Condition::Comparison {
+            left,
+            operator,
+            right,
+        }
+    )
+}
+
 fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
-    let mut left_node: Option<Expression> = None;
+    let mut left_expr: Option<Expression> = None;
     let mut operator: Option<Symbol> = None;
 
     while let Some(token) = iter.peek() {
-        if left_node.is_some() && operator.is_none() && !token.is_operator() {
+        if left_expr.is_some() && operator.is_none() && !token.is_operator() {
             break;
         }
         match token {
             Token::Num(ref s) | Token::Identifier(ref s) => {
                 if let Some(op) = operator {
                     let right_node = ASTNode::default(NodeType::Identifier(s.clone()));
-                    left_node = Some(Expression::new(
-                        left_node.take().unwrap().ast, 
+                    left_expr = Some(Expression::new(
+                        left_expr.take().unwrap().ast, 
                         op,
                         right_node
                     ));
                     operator = None;
                 } else {
-                    left_node = Some(Expression::new_with_ast(ASTNode::default(NodeType::Identifier(s.clone()))));
+                    left_expr = Some(Expression::new_with_ast(ASTNode::default(NodeType::Identifier(s.clone()))));
                 }
             }
             Token::Symbol(Symbol::LeftParen) => {
                 let next_expr = parse_next_expression(iter)?;
                 if let Some(op) = operator {
-                    let right_node = next_expr;
-                    left_node = Some(Expression::new(
-                        left_node.take().unwrap().ast,
+                    let right_expr = next_expr;
+                    left_expr = Some(Expression::new(
+                        left_expr.take().unwrap().ast,
                         op,
-                        right_node.ast
+                        right_expr.ast
                     ));
                     operator = None;
                 } else {
-                    left_node = Some(next_expr);
+                    left_expr = Some(next_expr);
                 }
                 match iter.next() {
                     Some(Token::Symbol(Symbol::RightParen)) => (),
@@ -112,27 +160,26 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
                     None => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen))),
                 }
             }
-            Token::Symbol(ref s) => {
-                if !s.is_operator() || operator.is_some() {
-                    return Err(ParseError::UnexpectedToken(token.clone()));
-                }
-                operator = Some(s.clone());
-            }
-            Token::Keyword(k) => {
-                if let Some(n) = left_node {
+            Token::Symbol(Symbol::Semicolon) | Token::Keyword(_) => {
+                if let Some(n) = left_expr {
                     if operator.is_none() {
                         return Ok(n);
                     }
                 }
                 return Err(ParseError::IncorrectExpression);
             }
+            Token::Symbol(ref s) => {
+                if !s.is_operator() || operator.is_some() {
+                    return Err(ParseError::UnexpectedToken(token.clone()));
+                }
+                operator = Some(s.clone());
+            }
             _ => return Err(ParseError::UnexpectedToken(token.clone())),
         }
+        iter.next();
     }
 
-    iter.next();
-
-    if let Some(n) = left_node {
+    if let Some(n) = left_expr {
         if operator.is_none() {
             return Ok(n);
         }

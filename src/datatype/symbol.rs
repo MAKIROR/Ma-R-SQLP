@@ -35,6 +35,17 @@ impl Symbol {
             _ => false,
         }
     }
+    pub fn is_comparator(&self) -> bool {
+        match self {
+            Symbol::Equal
+            | Symbol::NotEqual
+            | Symbol::LessThan
+            | Symbol::GreaterThan
+            | Symbol::LessThanOrEqual
+            | Symbol::GreaterThanOrEqual => true,
+            _ => false,
+        }
+    }
 }
 
 pub fn parse_symbol(s: &str) -> Option<Symbol> {
