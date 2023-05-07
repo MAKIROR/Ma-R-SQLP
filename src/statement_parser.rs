@@ -1,7 +1,6 @@
 use std::{
     vec::IntoIter,
-    iter::Peekable,
-    collections::VecDeque
+    iter::Peekable
 };
 use super::{
     clause_parser::*,
@@ -18,18 +17,25 @@ use super::{
     },
 };
 
-pub fn parse_select(t: &Vec<Token>) -> Result<ASTNode> {
+pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
     let tokens = t.clone();
     let mut iter = tokens.into_iter().peekable();
-    while let Some(t) = iter.peek() {
-        match t {
-            Token::Keyword(Keyword::Where) => {
-                println!("{:?}", parse_where(&mut iter)?);
-            },
-            _ => {iter.next();},
-        };
-    }
-    return Ok(ASTNode::default(NodeType::Select));
+
+    match_token(&iter.next(), Token::Keyword(Keyword::Select))?;
+    let distinct = match parse_optional_args_or(&mut iter, vec![Arg::All, Arg::Distinct], Arg::All) {
+        Arg::Distinct => true,
+        _ => false,
+    };
+    let projections = parse_projection(&mut iter)?;
+    let table = parse_table(&mut iter)?;
+    let filter = parse_where(&mut iter)?;
+
+    return Ok(Statement::Select {
+        distinct,
+        projections,
+        table,
+        filter
+    });
 }
 
 pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
@@ -40,59 +46,6 @@ pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
 pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
    todo!()
    // TODO:
-}
-
-fn parse_column(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>> {
-    let mut paren = VecDeque::new();
-    let mut values: Vec<String> = Vec::new();
-    if let Some(Token::Symbol(Symbol::LeftParen)) = &iter.peek() {
-        paren.push_back(Symbol::LeftParen);
-        iter.next();
-    };
-    
-    loop {
-        match iter.next() {
-            Some(Token::Identifier(value)) | Some(Token::Num(value)) => values.push(value),
-            Some(Token::Symbol(Symbol::RightParen)) => {
-                if Some(Symbol::LeftParen) == paren.pop_back() {
-                    break;
-                }
-                return Err(ParseError::UnexpectedToken(Token::Symbol(Symbol::RightParen)))
-            },
-            Some(Token::Symbol(_)) => continue,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => {
-                if Some(Symbol::LeftParen) == paren.pop_back() {
-                    return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)))
-                }
-                break;
-            }
-        }
-    }
-    Ok(values)
-}
-
-fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Projection> {
-    let mut column_names = Vec::new();   
-
-    loop {
-        match iter.next() {
-            Some(Token::Identifier(name)) => column_names.push(name),
-            Some(Token::Symbol(Symbol::Asterisk)) => return Ok(Projection::AllColumns),
-            Some(Token::Symbol(_)) => continue,
-            Some(Token::Keyword(Keyword::From)) => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From)))
-        }
-    }
-    return Ok(Projection::Columns(column_names));
-}
-
-fn parse_table(iter: &mut Peekable<IntoIter<Token>>) -> Result<String> {
-    match iter.next() {
-        Some(Token::Identifier(name)) => return Ok(name),
-        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
-    }
 }
 
 fn parse_optional_args_or(

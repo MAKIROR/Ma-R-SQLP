@@ -3,19 +3,21 @@ use super::{
     ast::*,
 };
 
+#[derive(Debug)]
 pub enum Statement {
-    SelectStatement {
+    Select {
         distinct: bool,
         projections: Projection,
-        from: String,
+        table: String,
         filter: Option<Condition>,
     },
-    InsertStatement {
+    Insert {
         table: String,
         column_value: Vec<(String, String)>,
     },
 }
 
+#[derive(Debug)]
 pub enum Projection {
     AllColumns,
     Columns(Vec<String>),
