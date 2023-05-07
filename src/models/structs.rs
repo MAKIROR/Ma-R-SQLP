@@ -1,9 +1,5 @@
 use super::{
-    super::datatype::{
-        keyword::Keyword,
-        symbol::Symbol,
-        arg::Arg,
-    },
+    super::datatype::symbol::Symbol,
     ast::*,
 };
 
@@ -12,7 +8,7 @@ pub enum Statement {
         distinct: bool,
         projections: Projection,
         from: String,
-        filter: Option<Filter>,
+        filter: Option<Condition>,
     },
     InsertStatement {
         table: String,
@@ -23,10 +19,6 @@ pub enum Statement {
 pub enum Projection {
     AllColumns,
     Columns(Vec<String>),
-}
-
-pub struct Filter {
-    pub conditions: Vec<Condition>,
 }
 
 #[derive(Debug, Clone)]

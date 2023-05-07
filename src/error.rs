@@ -1,8 +1,5 @@
 use thiserror::Error;
-use super::{
-    datatype::token::*,
-    models::structs::Expression
-};
+use super::datatype::token::*;
 
 
 #[derive(Error, Debug)]
@@ -22,8 +19,14 @@ pub enum ParseError {
     #[error("Incorrect number of values: expect {0}")]
     IncorrectValueCount(usize),
 
-    #[error("Incorrect Expression")]
+    #[error("Incorrect expression")]
     IncorrectExpression,
+
+    #[error("Incorrect condition")]
+    IncorrectCondition,
+
+    #[error("Unknown error")]
+    UnknownError,
 }
 
 pub type Result<T> = std::result::Result<T, ParseError>;

@@ -115,14 +115,7 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
         "HAVING" => Some(Keyword::Having),
         "UNION" => Some(Keyword::Union),
         "NOT" => Some(Keyword::Not),
-        "AND" => {
-            if let Some(next) = s.split_whitespace().nth(1) {
-                if next.to_uppercase() == "NOT" {
-                    return Some(Keyword::And);
-                }
-            }
-            None
-        }
+        "AND" => Some(Keyword::And),
         "OR" => Some(Keyword::Or),
         _ => None,
     }

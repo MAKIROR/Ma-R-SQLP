@@ -19,7 +19,6 @@ where
 {
     let mut result = String::new();
 
-
     while let Some(&c) = chars.peek() {
         if condition(c) {
             break;
@@ -33,6 +32,7 @@ where
 pub trait SqlCharExt {
     fn is_symbol(&self) -> bool;
     fn as_symbol(&self) -> Option<Symbol>;
+    fn is_terminator(&self) -> bool;
 }
 
 impl SqlCharExt for char {
@@ -47,6 +47,12 @@ impl SqlCharExt for char {
             return Some(symbol)
         }
         None
+    }
+    fn is_terminator(&self) -> bool {
+        match self {
+            ';' | '/' => true,
+            _ => false,
+        }
     }
 }
 

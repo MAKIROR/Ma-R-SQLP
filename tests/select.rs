@@ -1,9 +1,9 @@
 use masql::lexer::lex;
-use masql::statement_parse::parse_select;
+use masql::statement_parser::parse_select;
 
 #[test]
 fn test_insert() {
-    let result = lex("SELECT name, age FROM students ;");
+    let result = lex("SELECT name, age FROM students WHERE age = 14 OR (name = 'makiror' AND id = 114);");
     println!("{:?}", result);
     let ast = parse_select(&result);
     if let Err(e) = ast {

@@ -21,12 +21,16 @@ pub fn lex(text: &str) -> Vec<Token> {
                     chars.next();
                 }
             }
+            token if token.is_terminator() => {
+                tokens.push(Token::Symbol(token.as_symbol().take().unwrap().clone()));
+                chars.next();
+            }
             token if token.is_ascii_digit() => {
                 let num = collect_until(&mut chars, |c| !c.is_ascii_digit() && c != '.');
                 tokens.push(Token::Num(num));
             }
             token if token.is_symbol() => {
-                let symbol = collect_until(&mut chars, |c| !c.is_symbol() && c != ';');
+                let symbol = collect_until(&mut chars, |c| !c.is_symbol() || c.is_terminator() );
                 if let Some(s) = symbol.as_symbol() {
                     tokens.push(Token::Symbol(s));
                 }
