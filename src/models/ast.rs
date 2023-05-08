@@ -13,6 +13,7 @@ pub enum NodeType {
     Arg(Arg),
     Symbol(Symbol),
     Identifier(String),
+    Number(String),
     Value(String),
     ColumnValue(String, String)
 }

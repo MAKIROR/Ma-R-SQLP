@@ -35,6 +35,7 @@ impl Symbol {
             _ => false,
         }
     }
+
     pub fn is_comparator(&self) -> bool {
         match self {
             Symbol::Equal
@@ -44,6 +45,14 @@ impl Symbol {
             | Symbol::LessThanOrEqual
             | Symbol::GreaterThanOrEqual => true,
             _ => false,
+        }
+    }
+    
+    pub fn get_priority(&self) -> i32 {
+        match self {
+            Symbol::Plus | Symbol::Minus => 1,
+            Symbol::Dot | Symbol::Slash => 2,
+            _ => 0,
         }
     }
 }

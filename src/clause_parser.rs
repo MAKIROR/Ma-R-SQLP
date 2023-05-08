@@ -166,9 +166,9 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
             break;
         }
         match token {
-            Token::Num(ref s) | Token::Identifier(ref s) => {
+            Token::Num(ref s) => {
                 if let Some(op) = operator {
-                    let right_node = ASTNode::default(NodeType::Identifier(s.clone()));
+                    let right_node = ASTNode::default(NodeType::Number(s.clone()));
                     left_expr = Some(Expression::new(
                         left_expr.take().unwrap().ast, 
                         op,
@@ -176,8 +176,21 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
                     ));
                     operator = None;
                 } else {
+                    left_expr = Some(Expression::new_with_ast(ASTNode::default(NodeType::Number(s.clone()))));
+                }
+            }
+            Token::Identifier(ref s) => {
+                if let Some(op) = operator {
+                    let right_node = ASTNode::default(NodeType::Identifier(s.clone()));
+                    left_expr = Some(Expression::new(
+                        left_expr.take().unwrap().ast, 
+                        op,
+                        right_node
+                    ));
+                } else {
                     left_expr = Some(Expression::new_with_ast(ASTNode::default(NodeType::Identifier(s.clone()))));
                 }
+                return Ok(left_expr.take().unwrap());
             }
             Token::Symbol(Symbol::LeftParen) => {
                 let next_expr = parse_next_expression(iter)?;
@@ -198,7 +211,7 @@ fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Express
                     None => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen))),
                 }
             }
-            Token::Symbol(Symbol::Semicolon) 
+            Token::Symbol(Symbol::Semicolon)
             | Token::Symbol(Symbol::RightParen)
             | Token::Keyword(_) => {
                 if let Some(n) = left_expr {
