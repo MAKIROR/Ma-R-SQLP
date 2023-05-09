@@ -9,7 +9,7 @@ pub enum Token {
     Keyword(Keyword),
     Symbol(Symbol),
     Identifier(String),
-    Num(String),
+    Number(String),
     Comment(String),
 }
 
@@ -89,7 +89,7 @@ impl fmt::Display for Token {
             Token::Keyword(keyword) => write!(f, "{}", keyword),
             Token::Symbol(symbol) => write!(f, "{}", symbol),
             Token::Identifier(identifier) => write!(f, "{}", identifier),
-            Token::Num(num) => write!(f, "{}", num),
+            Token::Number(num) => write!(f, "{}", num),
             Token::Comment(comment) => write!(f, "{}", comment),
         }
     }
@@ -108,6 +108,13 @@ impl Token {
             | Token::Symbol(Symbol::LeftParen)
             | Token::Symbol(Symbol::RightParen) => true,
             _ => false,
+        }
+    }
+
+    pub fn as_symbol(&self) -> Option<Symbol> {
+        match self {
+            Token::Symbol(s) => Some(s.clone()),
+            _ => None,
         }
     }
 }

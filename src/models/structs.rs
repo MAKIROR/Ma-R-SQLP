@@ -62,8 +62,21 @@ impl Expression {
     }
 
     pub fn new_with_symbol(s: Symbol) -> Self {
-        Self {
-            ast: ASTNode::default(NodeType::Symbol(s))
+        Self { ast: ASTNode::default(NodeType::Symbol(s)) }
+    }
+
+    pub fn new_left(node: NodeType) -> Self {
+        Self { ast: ASTNode::new_node(node) }
+    }
+
+    pub fn new_unary_op(s: Symbol, expr: ASTNode) -> Self {
+        Self { 
+            ast: ASTNode::new(
+                NodeType::Symbol(s),
+                Some(Box::new(expr)),
+                None
+            ) 
         }
     }
 }
+

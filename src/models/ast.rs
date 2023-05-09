@@ -45,20 +45,16 @@ impl ASTNode {
             right,
         }
     }
+
+    pub fn new_node(node: NodeType) -> Self {
+        Self::new(node, None, None)
+    }
     
     pub fn set_left(&mut self, node: ASTNode) {
         self.left = Some(Box::new(node));
     }
 
-    pub fn new_left(&mut self, node: NodeType) {
-        self.left = Some(Box::new(ASTNode::default(node)));
-    }
-
     pub fn set_right(&mut self, node: ASTNode) {
         self.right = Some(Box::new(node));
-    }
-
-    pub fn new_right(&mut self, node: NodeType) {
-        self.right = Some(Box::new(ASTNode::default(node)));
     }
 } 

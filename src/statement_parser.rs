@@ -12,7 +12,6 @@ use super::{
     },
     datatype::{
         keyword::Keyword,
-        symbol::Symbol,
         arg::Arg,
     },
 };

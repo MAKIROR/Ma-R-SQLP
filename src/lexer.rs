@@ -27,7 +27,7 @@ pub fn lex(text: &str) -> Vec<Token> {
             }
             token if token.is_ascii_digit() => {
                 let num = collect_until(&mut chars, |c| !c.is_ascii_digit() && c != '.');
-                tokens.push(Token::Num(num));
+                tokens.push(Token::Number(num));
             }
             token if token.is_symbol() => {
                 let symbol = collect_until(&mut chars, |c| !c.is_symbol() || c.is_terminator() );
