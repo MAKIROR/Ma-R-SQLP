@@ -3,7 +3,7 @@ use masql::statement_parser::parse_select;
 
 #[test]
 fn test_insert() {
-    let result = lex("SELECT name, age FROM students WHERE age = 1 + 2 * 3 ;");
+    let result = lex("SELECT name, age FROM students WHERE age = 1 + 2 * 3 GROUP BY name;");
     println!("{:?}", result);
     let ast = parse_select(&result);
     if let Err(e) = ast {

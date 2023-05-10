@@ -13,6 +13,9 @@ pub enum ParseError {
     #[error("Missing comparator")]
     MissingComparator,
 
+    #[error("Missing column")]
+    MissingColumn,
+
     #[error("Syntax error: {0}")]
     SyntaxError(String),
 

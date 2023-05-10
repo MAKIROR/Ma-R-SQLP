@@ -1,4 +1,7 @@
-use super::datatype::token::*;
+use super::datatype::{
+    token::*,
+    keyword::KeywordExt,
+};
 
 pub fn lex(text: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
@@ -11,12 +14,12 @@ pub fn lex(text: &str) -> Vec<Token> {
             '-' if chars.peek().map_or(false, |&c| c == '-') => {
                 chars.next();
                 chars.next();
-                let comment = collect_until(&mut chars, |c| c == '\n').trim().to_string();
+                let comment = collect_until(&mut chars, |c, _| c == '\n').trim().to_string();
                 tokens.push(Token::Comment(comment));
             }
             '\'' | '"' => {
                 if let Some(quote) = chars.next() {
-                    let literal = collect_until(&mut chars, |c| c == quote);
+                    let literal = collect_until(&mut chars, |c, _| c == quote);
                     tokens.push(Token::Identifier(literal));
                     chars.next();
                 }
@@ -26,17 +29,17 @@ pub fn lex(text: &str) -> Vec<Token> {
                 chars.next();
             }
             token if token.is_ascii_digit() => {
-                let num = collect_until(&mut chars, |c| !c.is_ascii_digit() && c != '.');
+                let num = collect_until(&mut chars, |c, _| !c.is_ascii_digit() && c != '.');
                 tokens.push(Token::Number(num));
             }
             token if token.is_symbol() => {
-                let symbol = collect_until(&mut chars, |c| !c.is_symbol() || c.is_terminator() );
+                let symbol = collect_until(&mut chars, |c, _| !c.is_symbol() || c.is_terminator() );
                 if let Some(s) = symbol.as_symbol() {
                     tokens.push(Token::Symbol(s));
                 }
             }
             _ => {
-                let text = collect_until(&mut chars, |c| !c.is_alphanumeric() && c != '_');
+                let text = collect_until(&mut chars, |c, result| !c.is_alphanumeric() && c != '_' && !result.has_suffix() );
                 if let Some(keyword) = text.as_keyword() {
                     tokens.push(Token::Keyword(keyword));
                 } else {

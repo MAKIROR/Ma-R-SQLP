@@ -15,12 +15,12 @@ pub enum Token {
 
 pub fn collect_until<F>(chars: &mut std::iter::Peekable<std::str::Chars>, condition: F) -> String
 where
-    F: Fn(char) -> bool,
+    F: Fn(char, String) -> bool,
 {
     let mut result = String::new();
 
     while let Some(&c) = chars.peek() {
-        if condition(c) {
+        if condition(c, result.clone()) {
             break;
         }
         result.push(c);

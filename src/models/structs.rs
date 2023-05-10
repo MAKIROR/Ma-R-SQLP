@@ -7,9 +7,10 @@ use super::{
 pub enum Statement {
     Select {
         distinct: bool,
-        projections: Projection,
+        projections: Column,
         table: String,
         filter: Option<Condition>,
+        group_by: Column
     },
     Insert {
         table: String,
@@ -18,7 +19,7 @@ pub enum Statement {
 }
 
 #[derive(Debug)]
-pub enum Projection {
+pub enum Column {
     AllColumns,
     Columns(Vec<String>),
 }

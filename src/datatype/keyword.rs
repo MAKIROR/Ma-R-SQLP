@@ -30,8 +30,10 @@ pub enum Keyword {
 }
 
 pub fn parse_keyword(s: &str) -> Option<Keyword> {
-    let upper_case = s.to_uppercase();
-    match upper_case.as_str() {
+    let mut iter = s.split_whitespace();
+    let first = iter.next()?.to_uppercase();
+
+    match first.as_str() {
         "SELECT" => Some(Keyword::Select),
         "INSERT" => Some(Keyword::Insert),
         "UPDATE" => Some(Keyword::Update),
@@ -39,74 +41,43 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
         "FROM" => Some(Keyword::From),
         "WHERE" => Some(Keyword::Where),
         "GROUP" => {
-            if let Some(next) = s.split_whitespace().nth(1) {
-                match next.to_uppercase().as_str() {
-                    "BY" => {
-                        return Some(Keyword::GroupBy);
-                    }
-                    _ => {}
+            if let Some(next) = iter.next() {
+                if next == "BY" {
+                    return Some(Keyword::GroupBy);
                 }
             }
             None
         }
-        "ORDER" => {
-            if let Some(next) = s.split_whitespace().nth(1) {
-                match next.to_uppercase().as_str() {
-                    "BY" => {
-                        return Some(Keyword::OrderBy);
-                    }
-                    _ => {}
-                }
-            }
-            None
-        }
+        "ORDER" => Some(Keyword::OrderBy),
         "JOIN" => Some(Keyword::Join),
         "INTO" => Some(Keyword::Into),
         "INNER" => {
-            if let Some(next) = s.split_whitespace().nth(1) {
-                if next.to_uppercase() == "JOIN" {
-                    return Some(Keyword::InnerJoin);
-                }
+            if iter.next() == Some("JOIN") {
+                return Some(Keyword::InnerJoin);
             }
             None
         }
         "LEFT" => {
-            if let Some(next) = s.split_whitespace().nth(1) {
-                match next.to_uppercase().as_str() {
-                    "JOIN" => {
-                        return Some(Keyword::LeftJoin);
-                    }
-                    "OUTER" => {
-                        if let Some(tail) = s.split_whitespace().nth(2) {
-                            if tail.to_uppercase() == "JOIN" {
-                                return Some(Keyword::LeftJoin);
-                            }
-                        }
-                        None
-                    }
-                    _ => None,
-                }
-            } else {
-                None
+            if iter.next() == Some("JOIN") {
+                return Some(Keyword::LeftJoin);
+            } else if iter.next() == Some("OUTER") && iter.next() == Some("JOIN") {
+                return Some(Keyword::LeftJoin);
             }
+            None
         }
         "RIGHT" => {
-            if let Some(next) = s.split_whitespace().nth(1) {
-                if next.to_uppercase() == "JOIN" {
-                    return Some(Keyword::RightJoin);
-                }
+            if iter.next() == Some("JOIN") {
+                return  Some(Keyword::RightJoin);
             }
             None
         }
         "FULL" => {
-            if let Some(next) = s.split_whitespace().nth(1) {
-                if next.to_uppercase() == "JOIN" {
-                    return Some(Keyword::FullJoin);
-                }
+            if iter.next() == Some("JOIN") {
+                return Some(Keyword::FullJoin);
             }
             None
         }
-        "VALUES" =>Some(Keyword::Values),
+        "VALUES" => Some(Keyword::Values),
         "ON" => Some(Keyword::On),
         "AS" => Some(Keyword::As),
         "DISTINCT" => Some(Keyword::Distinct),
@@ -149,6 +120,24 @@ impl fmt::Display for Keyword {
             Keyword::Not => write!(f, "NOT"),
             Keyword::And => write!(f, "AND"),
             Keyword::Or => write!(f, "OR"),
+        }
+    }
+}
+
+pub trait KeywordExt {
+    fn has_suffix(&self) -> bool;
+}
+
+impl KeywordExt for String {
+    fn has_suffix(&self) -> bool {
+        match self.to_uppercase().as_str() {
+            "GROUP"
+            | "INNER"
+            | "LEFT"
+            | "OUTER"
+            | "RIGHT"
+            | "FULL" => true,
+            _ => false,
         }
     }
 }
