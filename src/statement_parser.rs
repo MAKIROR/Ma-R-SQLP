@@ -10,10 +10,7 @@ use super::{
         ast::*,
         structs::*,
     },
-    datatype::{
-        keyword::Keyword,
-        arg::Arg,
-    },
+    datatype::keyword::Keyword,
 };
 
 pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
@@ -21,21 +18,28 @@ pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
     let mut iter = tokens.into_iter().peekable();
 
     match_token(&iter.next(), Token::Keyword(Keyword::Select))?;
-    let distinct = match parse_optional_args_or(&mut iter, vec![Arg::All, Arg::Distinct], Arg::All) {
-        Arg::Distinct => true,
+    let distinct = match parse_optional_args_or(&mut iter, vec![Keyword::All, Keyword::Distinct], Keyword::All) {
+        Keyword::Distinct => true,
         _ => false,
     };
+    
     let projections = parse_projection(&mut iter)?;
     let table = parse_table(&mut iter)?;
     let filter = parse_where(&mut iter)?;
+    println!("1");
     let group_by = parse_groupby(&mut iter)?;
+    println!("0");
+    let having = parse_having(&mut iter)?;
+    let order_by = parse_orderby(&mut iter)?;
 
     return Ok(Statement::Select {
         distinct,
         projections,
         table,
         filter,
-        group_by
+        group_by,
+        having,
+        order_by
     });
 }
 
@@ -51,14 +55,13 @@ pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
 
 fn parse_optional_args_or(
     iter: &mut Peekable<IntoIter<Token>>,
-    args: Vec<Arg>,
-    default: Arg,
-) -> Arg {
+    args: Vec<Keyword>,
+    default: Keyword,
+) -> Keyword {
     if let Some(Token::Keyword(keyword)) = iter.peek() {
-        if let Some(arg) = Option::from(keyword) {
-            if let Some(nodetype) = args.iter().find(|&a| a.clone() == arg) {
-                return nodetype.clone();
-            }
+        if let Some(nodetype) = args.iter().find(|&a| a.clone() == keyword.clone()) {
+            iter.next();
+            return nodetype.clone();
         }
     }
     default

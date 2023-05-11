@@ -27,6 +27,8 @@ pub enum Keyword {
     Not,
     And,
     Or,
+    Asc,
+    Desc,
 }
 
 pub fn parse_keyword(s: &str) -> Option<Keyword> {
@@ -48,7 +50,14 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
             }
             None
         }
-        "ORDER" => Some(Keyword::OrderBy),
+        "ORDER" => {
+            if let Some(next) = iter.next() {
+                if next == "BY" {
+                    return Some(Keyword::OrderBy);
+                }
+            }
+            None
+        }
         "JOIN" => Some(Keyword::Join),
         "INTO" => Some(Keyword::Into),
         "INNER" => {
@@ -88,6 +97,8 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
         "NOT" => Some(Keyword::Not),
         "AND" => Some(Keyword::And),
         "OR" => Some(Keyword::Or),
+        "ASC" => Some(Keyword::Asc),
+        "DESC" => Some(Keyword::Desc),
         _ => None,
     }
 }
@@ -120,6 +131,8 @@ impl fmt::Display for Keyword {
             Keyword::Not => write!(f, "NOT"),
             Keyword::And => write!(f, "AND"),
             Keyword::Or => write!(f, "OR"),
+            Keyword::Asc => write!(f, "ASC"),
+            Keyword::Desc => write!(f, "DESC")
         }
     }
 }
@@ -132,6 +145,7 @@ impl KeywordExt for String {
     fn has_suffix(&self) -> bool {
         match self.to_uppercase().as_str() {
             "GROUP"
+            | "ORDER"
             | "INNER"
             | "LEFT"
             | "OUTER"

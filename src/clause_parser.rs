@@ -26,6 +26,17 @@ pub fn parse_where(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condit
     return Ok(Some(condition))
 }
 
+pub fn parse_having(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condition>> {
+    match iter.peek() {
+        Some(Token::Keyword(Keyword::Having)) => (),
+        _  => return Ok(None),
+    }
+    iter.next();
+
+    let condition = parse_condition(iter)?;
+    return Ok(Some(condition))
+}
+
 pub fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
     let mut column_names = Vec::new();   
 
@@ -58,13 +69,53 @@ pub fn parse_groupby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
                 iter.next();
                 continue;
             },
-            Some(Token::Keyword(Keyword::From)) | Some(Token::Symbol(Symbol::Semicolon)) => break,
+            Some(Token::Keyword(Keyword::Having)) | Some(Token::Symbol(Symbol::Semicolon)) => break,
             Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
             None => return Err(ParseError::MissingColumn)
         }
         iter.next();
     }
     return Ok(Column::Columns(column_names));
+}
+
+pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<(String, Sort)>>> {
+    match iter.peek() {
+        Some(Token::Keyword(Keyword::OrderBy)) => (),
+        _  => return Ok(None),
+    }
+    iter.next();
+
+    let mut order_by: Vec<(String, Sort)> = Vec::new();
+
+    loop {
+        match iter.peek() {
+            Some(Token::Identifier(name)) => {
+                let current_name = name.clone();
+                iter.next();
+
+                match iter.next() {
+                    Some(t) => {
+                        let sort = match t {
+                            Token::Keyword(Keyword::Asc) => Sort::ASC,
+                            | Token::Keyword(Keyword::Desc) => Sort::DESC,
+                            _ => return Err(ParseError::UnexpectedToken(t.clone())),
+                        };
+                        let tuple = (current_name, sort);
+                        order_by.push(tuple);
+                    },
+                    None => return Err(ParseError::MissingSort)
+                }
+            },
+            Some(Token::Symbol(Symbol::Comma)) => {
+                iter.next();
+                continue;
+            },
+            Some(Token::Symbol(Symbol::Semicolon)) => break,
+            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
+            None => return Err(ParseError::MissingColumn)
+        }
+    }
+    return Ok(Some(order_by));
 }
 
 pub fn parse_table(iter: &mut Peekable<IntoIter<Token>>) -> Result<String> {
@@ -141,7 +192,7 @@ fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
         None => return Err(ParseError::MissingComparator),
     };
 
-    let right = parse_next_expression(iter)?;
+    let right = parse_next_term(iter)?;
 
     Ok(
         Condition::Comparison {
@@ -150,10 +201,6 @@ fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
             right,
         }
     )
-}
-
-fn parse_next_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
-    parse_next_term(iter)
 }
 
 fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
@@ -214,7 +261,7 @@ fn parse_primary(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
             Token::Identifier(ref s) => return Ok(Expression::new_left(NodeType::Identifier(s.clone()))),
             Token::Number(ref s) => return Ok(Expression::new_left(NodeType::Number(s.clone()))),
             Token::Symbol(Symbol::LeftParen) => {
-                let expr = parse_next_expression(iter)?;
+                let expr = parse_next_term(iter)?;
                 match iter.next() {
                     Some(Token::Symbol(Symbol::RightParen)) => Ok(expr),
                     _ => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen))),

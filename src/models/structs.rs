@@ -10,7 +10,9 @@ pub enum Statement {
         projections: Column,
         table: String,
         filter: Option<Condition>,
-        group_by: Column
+        group_by: Column,
+        having: Option<Condition>,
+        order_by: Option<Vec<(String, Sort)>>
     },
     Insert {
         table: String,
@@ -22,6 +24,12 @@ pub enum Statement {
 pub enum Column {
     AllColumns,
     Columns(Vec<String>),
+}
+
+#[derive(Debug)]
+pub enum Sort {
+    ASC,
+    DESC
 }
 
 #[derive(Debug, Clone)]

@@ -16,6 +16,9 @@ pub enum ParseError {
     #[error("Missing column")]
     MissingColumn,
 
+    #[error("Missing sorting keyword")]
+    MissingSort,
+
     #[error("Syntax error: {0}")]
     SyntaxError(String),
 

@@ -1,6 +1,5 @@
 use super::super::datatype::{
     symbol::Symbol,
-    arg::Arg,
 };
 
 #[derive(Debug, Clone)]
@@ -10,7 +9,6 @@ pub enum NodeType {
     Delete,
     Update,
     Values,
-    Arg(Arg),
     Symbol(Symbol),
     Identifier(String),
     Number(String),

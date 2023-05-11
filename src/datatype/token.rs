@@ -117,4 +117,11 @@ impl Token {
             _ => None,
         }
     }
+
+    pub fn as_keyword(&self) -> Option<Keyword> {
+        match self {
+            Token::Keyword(k) => Some(k.clone()),
+            _ => None,
+        }
+    }
 }
