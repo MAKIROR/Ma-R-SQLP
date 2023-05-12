@@ -19,6 +19,9 @@ pub enum ParseError {
     #[error("Missing sorting keyword")]
     MissingSort,
 
+    #[error("Missing terminator")]
+    MissingTerminator,
+
     #[error("Syntax error: {0}")]
     SyntaxError(String),
 

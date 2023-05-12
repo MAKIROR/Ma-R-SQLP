@@ -26,11 +26,17 @@ pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
     let projections = parse_projection(&mut iter)?;
     let table = parse_table(&mut iter)?;
     let filter = parse_where(&mut iter)?;
-    println!("1");
     let group_by = parse_groupby(&mut iter)?;
-    println!("0");
     let having = parse_having(&mut iter)?;
     let order_by = parse_orderby(&mut iter)?;
+
+    if let Some(terminator) = iter.next() {
+        if !terminator.is_terminator() {
+            return Err(ParseError::UnexpectedToken(terminator));
+        }
+    } else {
+        return Err(ParseError::MissingTerminator);
+    }
 
     return Ok(Statement::Select {
         distinct,
@@ -44,7 +50,12 @@ pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
 }
 
 pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
-   todo!()
+    let tokens = t.clone();
+    let mut iter = tokens.into_iter().peekable();
+
+    match_token(&iter.next(), Token::Keyword(Keyword::Insert))?;
+
+    todo!()
    // TODO:
 }
 

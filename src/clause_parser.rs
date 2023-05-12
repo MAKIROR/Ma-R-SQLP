@@ -69,7 +69,8 @@ pub fn parse_groupby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
                 iter.next();
                 continue;
             },
-            Some(Token::Keyword(Keyword::Having)) | Some(Token::Symbol(Symbol::Semicolon)) => break,
+            Some(Token::Keyword(Keyword::Having)) => break,
+            Some(token) if token.is_terminator() => break,
             Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
             None => return Err(ParseError::MissingColumn)
         }
@@ -110,7 +111,7 @@ pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<
                 iter.next();
                 continue;
             },
-            Some(Token::Symbol(Symbol::Semicolon)) => break,
+            Some(token) if token.is_terminator() => break,
             Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
             None => return Err(ParseError::MissingColumn)
         }
@@ -162,7 +163,8 @@ fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
                     return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)));
                 }
             },
-            Token::Symbol(Symbol::Semicolon) | Token::Symbol(Symbol::RightParen) | Token::Keyword(_) => break,
+            token if token.is_terminator() => break,
+            Token::Symbol(Symbol::RightParen) | Token::Keyword(_) => break,
             Token::Symbol(_) | Token::Number(_) => {
                 return Err(ParseError::UnexpectedToken(token.clone()));
             }

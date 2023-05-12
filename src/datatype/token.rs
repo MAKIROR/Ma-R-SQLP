@@ -124,4 +124,12 @@ impl Token {
             _ => None,
         }
     }
+
+    pub fn is_terminator(&self) -> bool {
+        match self {
+            Token::Symbol(Symbol::Semicolon)
+            | Token::Symbol(Symbol::Slash) => true,
+            _ => false
+        }
+    }
 }
