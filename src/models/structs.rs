@@ -20,6 +20,12 @@ pub enum Statement {
     },
 }
 
+#[derive(Debug, Clone)]
+pub enum Value {
+    Identifier(String),
+    Variable(String),
+}
+
 #[derive(Debug)]
 pub enum Column {
     AllColumns,
@@ -44,7 +50,7 @@ pub enum Condition {
     },
     Not(Box<Condition>),
     Comparison {
-        left: String,
+        left: Value,
         operator: Symbol,
         right: Expression,
     }

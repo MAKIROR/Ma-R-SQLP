@@ -168,7 +168,7 @@ fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
             Token::Symbol(_) | Token::Number(_) => {
                 return Err(ParseError::UnexpectedToken(token.clone()));
             }
-            Token::Identifier(_) => {
+            Token::Identifier(_) | Token::Variable(_) => {
                 left = Some(parse_comparison(iter)?);
             }
             Token::Comment(_) => (),
@@ -183,7 +183,8 @@ fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
 
 fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
     let left = match iter.peek() {
-        Some(Token::Identifier(ref s)) => s.clone(),
+        Some(Token::Identifier(ref s)) => Value::Identifier(s.clone()),
+        Some(Token::Variable(ref v)) => Value::Variable(v.clone()),
         Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
         None => return Err(ParseError::MissingComparator),
     };

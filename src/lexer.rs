@@ -24,6 +24,11 @@ pub fn lex(text: &str) -> Vec<Token> {
                     chars.next();
                 }
             }
+            '@' => {
+                chars.next();
+                let text = collect_until(&mut chars, |c, result| !c.is_alphanumeric() && c != '_');
+                tokens.push(Token::Variable(text));
+            }
             token if token.is_terminator() => {
                 tokens.push(Token::Symbol(token.as_symbol().take().unwrap().clone()));
                 chars.next();

@@ -60,6 +60,11 @@ pub fn parse_insert(t: &Vec<Token>) -> Result<ASTNode> {
 }
 
 pub fn parse_delete(t: &Vec<Token>) -> Result<ASTNode> {
+    let tokens = t.clone();
+    let mut iter = tokens.into_iter().peekable();
+
+    match_token(&iter.next(), Token::Keyword(Keyword::Delete))?;
+
    todo!()
    // TODO:
 }

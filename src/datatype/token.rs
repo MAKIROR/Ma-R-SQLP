@@ -2,13 +2,16 @@ use std::fmt;
 use super::{
     keyword::*,
     symbol::*,
+    function::*
 };
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Keyword(Keyword),
     Symbol(Symbol),
+    Function(Function),
     Identifier(String),
+    Variable(String),
     Number(String),
     Comment(String),
 }
@@ -88,7 +91,9 @@ impl fmt::Display for Token {
         match self {
             Token::Keyword(keyword) => write!(f, "{}", keyword),
             Token::Symbol(symbol) => write!(f, "{}", symbol),
+            Token::Function(function) => write!(f, "{}", function),
             Token::Identifier(identifier) => write!(f, "{}", identifier),
+            Token::Variable(variable) => write!(f, "{}", variable),
             Token::Number(num) => write!(f, "{}", num),
             Token::Comment(comment) => write!(f, "{}", comment),
         }
