@@ -32,6 +32,22 @@ where
     result
 }
 
+pub fn collect_to<F>(chars: &mut std::iter::Peekable<std::str::Chars>, condition: F) -> String
+where
+    F: Fn(char, String) -> bool,
+{
+    let mut result = String::new();
+
+    while let Some(&c) = chars.peek() {
+        result.push(c);
+        chars.next();
+        if condition(c, result.clone()) {
+            break;
+        }
+    }
+    result
+}
+
 pub trait SqlCharExt {
     fn is_symbol(&self) -> bool;
     fn as_symbol(&self) -> Option<Symbol>;
@@ -61,8 +77,10 @@ impl SqlCharExt for char {
 
 pub trait SqlStringExt {
     fn is_keyword(&self) -> bool;
+    fn is_function(&self) -> bool;
     fn as_keyword(&self) -> Option<Keyword>;
     fn as_symbol(&self) -> Option<Symbol>;
+    fn as_function(&self) -> Option<Function>;
 }
 
 impl SqlStringExt for String {
@@ -71,6 +89,9 @@ impl SqlStringExt for String {
             return true
         }
         false
+    }
+    fn is_function(&self) -> bool {
+        is_function(self)
     }
     fn as_keyword(&self) -> Option<Keyword> {
         if let Some(keyword) = parse_keyword(&self) {
@@ -81,6 +102,12 @@ impl SqlStringExt for String {
     fn as_symbol(&self) -> Option<Symbol> {
         if let Some(symbol) = parse_symbol(&self.as_str()) {
             return Some(symbol)
+        }
+        None
+    }
+    fn as_function(&self) -> Option<Function> {
+        if let Some(function) = parse_function(&self.as_str()) {
+            return Some(function)
         }
         None
     }
