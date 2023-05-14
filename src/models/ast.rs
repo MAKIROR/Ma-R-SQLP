@@ -1,5 +1,6 @@
-use super::super::datatype::{
-    symbol::Symbol,
+use super::{
+    super::datatype::symbol::Symbol,
+    data::*,
 };
 
 #[derive(Debug, Clone)]
@@ -10,9 +11,8 @@ pub enum NodeType {
     Update,
     Values,
     Symbol(Symbol),
-    Identifier(String),
-    Number(String),
-    Value(String),
+    Value(Value),
+    Function(Function),
     ColumnValue(String, String)
 }
 

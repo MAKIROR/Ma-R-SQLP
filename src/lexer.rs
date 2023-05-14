@@ -26,7 +26,7 @@ pub fn lex(text: &str) -> Vec<Token> {
             }
             '@' => {
                 chars.next();
-                let text = collect_until(&mut chars, |c, result| !c.is_alphanumeric() && c != '_');
+                let text = collect_until(&mut chars, |c, _| !c.is_alphanumeric() && c != '_');
                 tokens.push(Token::Variable(text));
             }
             token if token.is_terminator() => {
@@ -45,15 +45,9 @@ pub fn lex(text: &str) -> Vec<Token> {
             }
             _ => {
                 let text = collect_until(&mut chars, |c, result| !c.is_alphanumeric() && c != '_' && !result.has_suffix() );
-                if text.is_function() {
-                    if let Some('(') = chars.peek() {
-                        let full_text = format!("{}{}", text, collect_to(&mut chars, |c, _| c == ')'));
-                        if let Some(function) = full_text.as_function() {
-                            tokens.push(Token::Function(function));
-                        }
-                    }
-                }
-                else if let Some(keyword) = text.as_keyword() {
+                if let Some(function) = text.as_function() {
+                    tokens.push(Token::Function(function));
+                } else if let Some(keyword) = text.as_keyword() {
                     tokens.push(Token::Keyword(keyword));
                 } else {
                     tokens.push(Token::Identifier(text));

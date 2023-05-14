@@ -1,5 +1,5 @@
 use thiserror::Error;
-use super::datatype::token::*;
+use super::super::datatype::token::*;
 
 
 #[derive(Error, Debug)]
@@ -19,8 +19,14 @@ pub enum ParseError {
     #[error("Missing sorting keyword")]
     MissingSort,
 
+    #[error("Missing value")]
+    MissingValue,
+
     #[error("Missing terminator")]
     MissingTerminator,
+
+    #[error("Missing function")]
+    MissingFunction,
 
     #[error("Syntax error: {0}")]
     SyntaxError(String),
@@ -28,11 +34,17 @@ pub enum ParseError {
     #[error("Incorrect number of values: expect {0}")]
     IncorrectValueCount(usize),
 
+    #[error("Incorrect number of args: expect {0}")]
+    IncorrectArgCount(u8),
+
     #[error("Incorrect expression")]
     IncorrectExpression,
 
     #[error("Incorrect condition")]
     IncorrectCondition,
+
+    #[error("Incorrect function")]
+    IncorrectFunction,
 
     #[error("Unknown error")]
     UnknownError,

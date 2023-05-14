@@ -5,12 +5,17 @@ use std::{
 use super::{
     clause_parser::*,
     error::{ParseError, Result},
-    datatype::token::*,
-    models::{
-        ast::*,
-        structs::*,
+
+    super::{
+        models::{
+            ast::*,
+            structs::*,
+        },
+        datatype::{
+            token::*,
+            keyword::Keyword
+        }
     },
-    datatype::keyword::Keyword,
 };
 
 pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {

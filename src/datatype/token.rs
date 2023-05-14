@@ -9,7 +9,7 @@ use super::{
 pub enum Token {
     Keyword(Keyword),
     Symbol(Symbol),
-    Function(Function),
+    Function(FunctionT),
     Identifier(String),
     Variable(String),
     Number(String),
@@ -32,22 +32,6 @@ where
     result
 }
 
-pub fn collect_to<F>(chars: &mut std::iter::Peekable<std::str::Chars>, condition: F) -> String
-where
-    F: Fn(char, String) -> bool,
-{
-    let mut result = String::new();
-
-    while let Some(&c) = chars.peek() {
-        result.push(c);
-        chars.next();
-        if condition(c, result.clone()) {
-            break;
-        }
-    }
-    result
-}
-
 pub trait SqlCharExt {
     fn is_symbol(&self) -> bool;
     fn as_symbol(&self) -> Option<Symbol>;
@@ -56,13 +40,13 @@ pub trait SqlCharExt {
 
 impl SqlCharExt for char {
     fn is_symbol(&self) -> bool {
-        if let Some(_) = parse_symbol(&self.to_string().as_str()) {
+        if let Some(_) = to_symbol(&self.to_string().as_str()) {
             return true
         }
         false
     }
     fn as_symbol(&self) -> Option<Symbol> {
-        if let Some(symbol) = parse_symbol(&self.to_string().as_str()) {
+        if let Some(symbol) = to_symbol(&self.to_string().as_str()) {
             return Some(symbol)
         }
         None
@@ -80,12 +64,12 @@ pub trait SqlStringExt {
     fn is_function(&self) -> bool;
     fn as_keyword(&self) -> Option<Keyword>;
     fn as_symbol(&self) -> Option<Symbol>;
-    fn as_function(&self) -> Option<Function>;
+    fn as_function(&self) -> Option<FunctionT>;
 }
 
 impl SqlStringExt for String {
     fn is_keyword(&self) -> bool {
-        if let Some(_) = parse_keyword(&self.as_str()) {
+        if let Some(_) = to_keyword(&self.as_str()) {
             return true
         }
         false
@@ -94,19 +78,19 @@ impl SqlStringExt for String {
         is_function(self)
     }
     fn as_keyword(&self) -> Option<Keyword> {
-        if let Some(keyword) = parse_keyword(&self) {
+        if let Some(keyword) = to_keyword(&self) {
             return Some(keyword)
         }
         None
     }
     fn as_symbol(&self) -> Option<Symbol> {
-        if let Some(symbol) = parse_symbol(&self.as_str()) {
+        if let Some(symbol) = to_symbol(&self.as_str()) {
             return Some(symbol)
         }
         None
     }
-    fn as_function(&self) -> Option<Function> {
-        if let Some(function) = parse_function(&self.as_str()) {
+    fn as_function(&self) -> Option<FunctionT> {
+        if let Some(function) = to_function(&self.as_str()) {
             return Some(function)
         }
         None

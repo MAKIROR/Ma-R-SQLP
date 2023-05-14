@@ -1,5 +1,6 @@
 use super::{
     super::datatype::symbol::Symbol,
+    data::*,
     ast::*,
 };
 
@@ -18,12 +19,6 @@ pub enum Statement {
         table: String,
         column_value: Vec<(String, String)>,
     },
-}
-
-#[derive(Debug, Clone)]
-pub enum Value {
-    Identifier(String),
-    Variable(String),
 }
 
 #[derive(Debug)]

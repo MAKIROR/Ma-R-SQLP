@@ -1,43 +1,24 @@
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Function {
-    Sum(String),
-    Avg(String),
-    Count(String),
-    Max(String),
-    Min(String),
-    Concat(Vec<String>),
+pub enum FunctionT {
+    Sum,
+    Avg,
+    Count,
+    Max,
+    Min,
+    Concat,
 }
 
-pub fn parse_function(s: &str) -> Option<Function> {
-    match s.trim().to_uppercase() {
-        s if s.starts_with("SUM(") && s.ends_with(")") => {
-            let column = &s[4..s.len() - 1];
-            return Some(Function::Sum(column.to_string()));
-        }
-        s if s.starts_with("AVG(") && s.ends_with(")") => {
-            let column = &s[4..s.len() - 1];
-            return Some(Function::Avg(column.to_string()));
-        }
-        s if s.starts_with("COUNT(") && s.ends_with(")") => {
-            let column = &s[6..s.len() - 1];
-            return Some(Function::Count(column.to_string()));
-        }    
-        s if s.starts_with("MAX(") && s.ends_with(")") => {
-            let column = &s[4..s.len() - 1];
-            return Some(Function::Max(column.to_string()));
-        }
-        s if s.starts_with("MIN(") && s.ends_with(")") => {
-            let column = &s[4..s.len() - 1];
-            return Some(Function::Min(column.to_string()));
-        }
-        s if s.starts_with("CONCAT(") && s.ends_with(")") => {
-            let column = &s[7..s.len() - 1];
-            let columns: Vec<String> = column.split(',').map(|s| s.trim().to_string()).collect();
-            return Some(Function::Concat(columns));
-        }
-        _ => None
+pub fn to_function(s: &str) -> Option<FunctionT> {
+    match s.to_uppercase().as_str() {
+        "SUM" => Some(FunctionT::Sum),
+        "AVG" => Some(FunctionT::Avg),
+        "COUNT" => Some(FunctionT::Count),
+        "MAX" => Some(FunctionT::Max),
+        "MIN" => Some(FunctionT::Min),
+        "CONCAT" => Some(FunctionT::Concat),
+        _ => None,
     }
 }
 
@@ -53,8 +34,28 @@ pub fn is_function(s: &str) -> bool {
     }
 }
 
-impl fmt::Display for Function {
+impl FunctionT {
+    pub fn arg_len(&self) -> u8 {
+        match self {
+            Self::Sum
+            | Self::Avg
+            | Self::Count
+            | Self::Max
+            | Self::Min => 1,
+            Self::Concat => 0,
+        }
+    }
+}
+
+impl fmt::Display for FunctionT {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        todo!()
+        match self {
+            Self::Sum => write!(f, "SUM"),
+            Self::Avg => write!(f, "AVG"),
+            Self::Count => write!(f, "COUNT"),
+            Self::Max => write!(f, "MAX"),
+            Self::Min => write!(f, "MIN"),
+            Self::Concat => write!(f, "CONCAT"),
+        }
     }
 }

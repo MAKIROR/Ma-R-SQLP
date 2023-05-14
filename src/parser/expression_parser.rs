@@ -4,129 +4,21 @@ use std::{
 };
 use super::{
     error::{ParseError, Result},
-    datatype::token::*,
-    models::{
-        ast::*,
-        structs::*,
-    },
-    datatype::{
-        keyword::Keyword,
-        symbol::Symbol,
-    },
+    super::{
+        models::{
+            data::*,
+            ast::*,
+            structs::*,
+        },
+        datatype::{
+            token::*,
+            keyword::Keyword,
+            symbol::Symbol,
+        },
+    }
 };
 
-pub fn parse_where(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condition>> {
-    match iter.peek() {
-        Some(Token::Keyword(Keyword::Where)) => (),
-        _  => return Ok(None),
-    }
-    iter.next();
-
-    let condition = parse_condition(iter)?;
-    return Ok(Some(condition))
-}
-
-pub fn parse_having(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condition>> {
-    match iter.peek() {
-        Some(Token::Keyword(Keyword::Having)) => (),
-        _  => return Ok(None),
-    }
-    iter.next();
-
-    let condition = parse_condition(iter)?;
-    return Ok(Some(condition))
-}
-
-pub fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
-    let mut column_names = Vec::new();   
-
-    loop {
-        match iter.next() {
-            Some(Token::Identifier(name)) => column_names.push(name),
-            Some(Token::Symbol(Symbol::Asterisk)) => return Ok(Column::AllColumns),
-            Some(Token::Symbol(_)) => continue,
-            Some(Token::Keyword(_)) => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From)))
-        }
-    }
-    return Ok(Column::Columns(column_names));
-}
-
-pub fn parse_groupby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
-    match iter.peek() {
-        Some(Token::Keyword(Keyword::GroupBy)) => (),
-        _  => return Ok(Column::AllColumns),
-    }
-    iter.next();
-
-    let mut column_names = Vec::new();   
-    loop {
-        match iter.peek() {
-            Some(Token::Identifier(name)) => column_names.push(name.clone()),
-            Some(Token::Symbol(Symbol::Asterisk)) => return Ok(Column::AllColumns),
-            Some(Token::Symbol(Symbol::Comma)) => {
-                iter.next();
-                continue;
-            },
-            Some(Token::Keyword(Keyword::Having)) => break,
-            Some(token) if token.is_terminator() => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingColumn)
-        }
-        iter.next();
-    }
-    return Ok(Column::Columns(column_names));
-}
-
-pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<(String, Sort)>>> {
-    match iter.peek() {
-        Some(Token::Keyword(Keyword::OrderBy)) => (),
-        _  => return Ok(None),
-    }
-    iter.next();
-
-    let mut order_by: Vec<(String, Sort)> = Vec::new();
-
-    loop {
-        match iter.peek() {
-            Some(Token::Identifier(name)) => {
-                let current_name = name.clone();
-                iter.next();
-
-                match iter.next() {
-                    Some(t) => {
-                        let sort = match t {
-                            Token::Keyword(Keyword::Asc) => Sort::ASC,
-                            | Token::Keyword(Keyword::Desc) => Sort::DESC,
-                            _ => return Err(ParseError::UnexpectedToken(t.clone())),
-                        };
-                        let tuple = (current_name, sort);
-                        order_by.push(tuple);
-                    },
-                    None => return Err(ParseError::MissingSort)
-                }
-            },
-            Some(Token::Symbol(Symbol::Comma)) => {
-                iter.next();
-                continue;
-            },
-            Some(token) if token.is_terminator() => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingColumn)
-        }
-    }
-    return Ok(Some(order_by));
-}
-
-pub fn parse_table(iter: &mut Peekable<IntoIter<Token>>) -> Result<String> {
-    match iter.next() {
-        Some(Token::Identifier(name)) => return Ok(name),
-        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
-    }
-}
-
-fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
+pub fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
     let mut left: Option<Condition> = None;
 
     while let Some(token) = iter.peek() {
@@ -206,7 +98,7 @@ fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
     )
 }
 
-fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
+pub fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
     let mut left_expr = parse_next_factor(iter)?;
 
     while let Some(token) = iter.peek() {
@@ -259,27 +151,84 @@ fn parse_next_factor(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression>
 }
 
 fn parse_primary(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> { 
-    if let Some(token) = iter.next() {
-        match token {
-            Token::Identifier(ref s) => return Ok(Expression::new_left(NodeType::Identifier(s.clone()))),
-            Token::Number(ref s) => return Ok(Expression::new_left(NodeType::Number(s.clone()))),
+    if let Some(token) = iter.peek() {
+        let result = match token {
+            Token::Identifier(ref s) => Ok(Expression::new_left(NodeType::Value(Value::Identifier(s.clone())))),
+            Token::Number(ref s) => Ok(Expression::new_left(NodeType::Value(Value::Number(s.clone())))),
+            Token::Function(_) => {
+                let function = parse_function(iter)?;
+                return Ok(Expression::new_left(NodeType::Function(function)));
+            },
             Token::Symbol(Symbol::LeftParen) => {
+                iter.next();
                 let expr = parse_next_term(iter)?;
-                match iter.next() {
+                return match iter.next() {
                     Some(Token::Symbol(Symbol::RightParen)) => Ok(expr),
-                    _ => return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen))),
-                }
+                    _ => Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen))),
+                };
             }
             Token::Symbol(Symbol::Plus) | Token::Symbol(Symbol::Minus) => {
+                let t = token.clone();
+                iter.next();
                 let expr = parse_primary(iter)?;
                 return Ok(Expression::new_unary_op(
-                    token.as_symbol().take().unwrap(),
+                    t.as_symbol().take().unwrap(),
                     expr.ast
                 ));
             }
-            _ => return Err(ParseError::UnexpectedToken(token.clone())),
-        }
+            _ => Err(ParseError::UnexpectedToken(token.clone())),
+        };
+
+        iter.next();
+        return result;
     } else {
         return Err(ParseError::IncorrectExpression);
+    }
+}
+
+fn parse_function(iter: &mut Peekable<IntoIter<Token>>) -> Result<Function> {
+    let function = match iter.peek() {
+        Some(Token::Function(f)) => f.clone(),
+        Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
+        _ => return Err(ParseError::MissingFunction),
+    };
+    iter.next();
+
+    match_token(&iter.next(), Token::Symbol(Symbol::LeftParen))?;
+
+    let mut args: Vec<Value> = Vec::new();
+
+    loop {
+        if let Some(v) = iter.peek() {
+            match v {
+                Token::Identifier(s) => args.push(Value::Identifier(s.clone())),
+                Token::Number(s) => args.push(Value::Number(s.clone())),
+                Token::Variable(s) => args.push(Value::Variable(s.clone())),
+                Token::Symbol(Symbol::RightParen) => {
+                    iter.next();
+                    break;
+                },
+                t => return Err(ParseError::UnexpectedToken(t.clone())),
+            }
+            iter.next();
+        } else {
+            return Err(ParseError::IncorrectFunction);
+        }
+    }
+
+    let arg_len = function.arg_len();
+
+    if args.len() == arg_len.into() {
+        return Ok(Function::new(function, args));
+    } else {
+        return Err(ParseError::IncorrectArgCount(arg_len));
+    }
+
+}
+
+fn match_token(value: &Option<Token>, expect: Token) -> Result<()> {
+    return match value {
+        Some(_) => Ok(()),
+        None => return Err(ParseError::MissingToken(expect))
     }
 }

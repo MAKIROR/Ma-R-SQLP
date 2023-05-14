@@ -23,41 +23,41 @@ pub enum Symbol {
 impl Symbol {
     pub fn is_operator(&self) -> bool {
         match self {
-            Symbol::Comma
-            | Symbol::Dot
-            | Symbol::Asterisk
-            | Symbol::Plus
-            | Symbol::Minus
-            | Symbol::Slash
-            | Symbol::Percent
-            | Symbol::LeftParen
-            | Symbol::RightParen => true,
+            Self::Comma
+            | Self::Dot
+            | Self::Asterisk
+            | Self::Plus
+            | Self::Minus
+            | Self::Slash
+            | Self::Percent
+            | Self::LeftParen
+            | Self::RightParen => true,
             _ => false,
         }
     }
 
     pub fn is_comparator(&self) -> bool {
         match self {
-            Symbol::Equal
-            | Symbol::NotEqual
-            | Symbol::LessThan
-            | Symbol::GreaterThan
-            | Symbol::LessThanOrEqual
-            | Symbol::GreaterThanOrEqual => true,
+            Self::Equal
+            | Self::NotEqual
+            | Self::LessThan
+            | Self::GreaterThan
+            | Self::LessThanOrEqual
+            | Self::GreaterThanOrEqual => true,
             _ => false,
         }
     }
     
     pub fn get_priority(&self) -> i32 {
         match self {
-            Symbol::Plus | Symbol::Minus => 1,
-            Symbol::Dot | Symbol::Slash => 2,
+            Self::Plus | Self::Minus => 1,
+            Self::Dot | Self::Slash => 2,
             _ => 0,
         }
     }
 }
 
-pub fn parse_symbol(s: &str) -> Option<Symbol> {
+pub fn to_symbol(s: &str) -> Option<Symbol> {
     match s {
         "," => Some(Symbol::Comma),
         "." => Some(Symbol::Dot),

@@ -31,7 +31,7 @@ pub enum Keyword {
     Desc,
 }
 
-pub fn parse_keyword(s: &str) -> Option<Keyword> {
+pub fn to_keyword(s: &str) -> Option<Keyword> {
     let mut iter = s.split_whitespace();
     let first = iter.next()?.to_uppercase();
 
@@ -106,33 +106,33 @@ pub fn parse_keyword(s: &str) -> Option<Keyword> {
 impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Keyword::Select => write!(f, "SELECT"),
-            Keyword::Insert => write!(f, "INSERT"),
-            Keyword::Update => write!(f, "UPDATE"),
-            Keyword::Delete => write!(f, "DELETE"),
-            Keyword::From => write!(f, "FROM"),
-            Keyword::Where => write!(f, "WHERE"),
-            Keyword::GroupBy => write!(f, "GROUP BY"),
-            Keyword::OrderBy => write!(f, "ORDER BY"),
-            Keyword::Join => write!(f, "JOIN"),
-            Keyword::Into => write!(f, "INTO"),
-            Keyword::InnerJoin => write!(f, "INNER JOIN"),
-            Keyword::LeftJoin => write!(f, "LEFT JOIN"),
-            Keyword::RightJoin => write!(f, "RIGHT JOIN"),
-            Keyword::FullJoin => write!(f, "FULL JOIN"),
-            Keyword::Values => write!(f, "VALUES"),
-            Keyword::On => write!(f, "ON"),
-            Keyword::As => write!(f, "AS"),
-            Keyword::Distinct => write!(f, "DISTINCT"),
-            Keyword::All => write!(f, "ALL"),
-            Keyword::Exists => write!(f, "EXISTS"),
-            Keyword::Having => write!(f, "HAVING"),
-            Keyword::Union => write!(f, "UNION"),
-            Keyword::Not => write!(f, "NOT"),
-            Keyword::And => write!(f, "AND"),
-            Keyword::Or => write!(f, "OR"),
-            Keyword::Asc => write!(f, "ASC"),
-            Keyword::Desc => write!(f, "DESC")
+            Self::Select => write!(f, "SELECT"),
+            Self::Insert => write!(f, "INSERT"),
+            Self::Update => write!(f, "UPDATE"),
+            Self::Delete => write!(f, "DELETE"),
+            Self::From => write!(f, "FROM"),
+            Self::Where => write!(f, "WHERE"),
+            Self::GroupBy => write!(f, "GROUP BY"),
+            Self::OrderBy => write!(f, "ORDER BY"),
+            Self::Join => write!(f, "JOIN"),
+            Self::Into => write!(f, "INTO"),
+            Self::InnerJoin => write!(f, "INNER JOIN"),
+            Self::LeftJoin => write!(f, "LEFT JOIN"),
+            Self::RightJoin => write!(f, "RIGHT JOIN"),
+            Self::FullJoin => write!(f, "FULL JOIN"),
+            Self::Values => write!(f, "VALUES"),
+            Self::On => write!(f, "ON"),
+            Self::As => write!(f, "AS"),
+            Self::Distinct => write!(f, "DISTINCT"),
+            Self::All => write!(f, "ALL"),
+            Self::Exists => write!(f, "EXISTS"),
+            Self::Having => write!(f, "HAVING"),
+            Self::Union => write!(f, "UNION"),
+            Self::Not => write!(f, "NOT"),
+            Self::And => write!(f, "AND"),
+            Self::Or => write!(f, "OR"),
+            Self::Asc => write!(f, "ASC"),
+            Self::Desc => write!(f, "DESC")
         }
     }
 }
