@@ -10,6 +10,9 @@ pub enum ParseError {
     #[error("Missing token: '{0}'")]
     MissingToken(Token),
 
+    #[error("Missing table")]
+    MissingTable,
+
     #[error("Missing comparator")]
     MissingComparator,
 

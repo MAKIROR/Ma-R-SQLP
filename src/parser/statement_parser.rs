@@ -29,7 +29,7 @@ pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
     };
     
     let projections = parse_projection(&mut iter)?;
-    let table = parse_table(&mut iter)?;
+    let table = parse_tables(&mut iter)?;
     let filter = parse_where(&mut iter)?;
     let group_by = parse_groupby(&mut iter)?;
     let having = parse_having(&mut iter)?;

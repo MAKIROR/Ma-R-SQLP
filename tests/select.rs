@@ -5,7 +5,7 @@ use masql::parser::statement_parser::parse_select;
 fn test_insert() {
     let result = lex("
     SELECT DISTINCT name, age
-        FROM students
+        FROM students, teachers
         WHERE @age = SUM(age) * 3 
         GROUP BY name, age 
         HAVING age > 14 

@@ -119,9 +119,25 @@ pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<
     return Ok(Some(order_by));
 }
 
-pub fn parse_table(iter: &mut Peekable<IntoIter<Token>>) -> Result<String> {
-    match iter.next() {
-        Some(Token::Identifier(name)) => return Ok(name),
-        _ => return Err(ParseError::MissingToken(Token::Identifier("Table name".to_string())))
+pub fn parse_tables(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>> {
+    let mut tables = Vec::new();
+    while let Some(token) = iter.peek() {
+        match token {
+            Token::Identifier(name) => tables.push(name.clone()),
+            Token::Symbol(Symbol::Comma) => {
+                iter.next();
+                continue;
+            },
+            Token::Keyword(_) => break,
+            token if token.is_terminator() => break,
+            token => return Err(ParseError::UnexpectedToken(token.clone())),
+        }
+        iter.next();
     }
+
+    if tables.len() == 0 {
+        return Err(ParseError::MissingTable);
+    }
+
+    Ok(tables)
 }

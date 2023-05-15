@@ -9,7 +9,7 @@ pub enum Statement {
     Select {
         distinct: bool,
         projections: Column,
-        table: String,
+        table: Vec<String>,
         filter: Option<Condition>,
         group_by: Column,
         having: Option<Condition>,
