@@ -13,34 +13,17 @@ pub enum Token {
     Identifier(String),
     Variable(String),
     Number(String),
-    Comment(String),
-}
-
-pub fn collect_until<F>(chars: &mut std::iter::Peekable<std::str::Chars>, condition: F) -> String
-where
-    F: Fn(char, String) -> bool,
-{
-    let mut result = String::new();
-
-    while let Some(&c) = chars.peek() {
-        if condition(c, result.clone()) {
-            break;
-        }
-        result.push(c);
-        chars.next();
-    }
-    result
 }
 
 pub trait SqlCharExt {
     fn is_symbol(&self) -> bool;
     fn as_symbol(&self) -> Option<Symbol>;
-    fn is_terminator(&self) -> bool;
+    fn has_next(&self, chars: &mut std::iter::Peekable<std::str::Chars>) -> bool;
 }
 
 impl SqlCharExt for char {
     fn is_symbol(&self) -> bool {
-        if let Some(_) = to_symbol(&self.to_string().as_str()) {
+        if to_symbol(&self.to_string().as_str()).is_some() {
             return true
         }
         false
@@ -51,10 +34,16 @@ impl SqlCharExt for char {
         }
         None
     }
-    fn is_terminator(&self) -> bool {
+
+    fn has_next(&self, chars: &mut std::iter::Peekable<std::str::Chars>) -> bool {
         match self {
-            ';' | '/' => true,
-            _ => false,
+            '!' | '<' | '>' => {
+                if chars.nth(1).map_or(false, |c| c == '=') {
+                    return true;
+                }
+                return false;
+            }
+            _ => return false,
         }
     }
 }
@@ -65,17 +54,21 @@ pub trait SqlStringExt {
     fn as_keyword(&self) -> Option<Keyword>;
     fn as_symbol(&self) -> Option<Symbol>;
     fn as_function(&self) -> Option<FunctionT>;
+    fn has_suffix(&self) -> bool;
 }
 
 impl SqlStringExt for String {
     fn is_keyword(&self) -> bool {
-        if let Some(_) = to_keyword(&self.as_str()) {
+        if to_keyword(&self.as_str()).is_some() {
             return true
         }
         false
     }
     fn is_function(&self) -> bool {
-        is_function(self)
+        if to_function(&self.as_str()).is_some() {
+            return true
+        }
+        false
     }
     fn as_keyword(&self) -> Option<Keyword> {
         if let Some(keyword) = to_keyword(&self) {
@@ -95,6 +88,18 @@ impl SqlStringExt for String {
         }
         None
     }
+    fn has_suffix(&self) -> bool {
+        match self.to_uppercase().as_str() {
+            "GROUP"
+            | "ORDER"
+            | "INNER"
+            | "LEFT"
+            | "OUTER"
+            | "RIGHT"
+            | "FULL" => true,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for Token {
@@ -106,7 +111,6 @@ impl fmt::Display for Token {
             Token::Identifier(identifier) => write!(f, "{}", identifier),
             Token::Variable(variable) => write!(f, "{}", variable),
             Token::Number(num) => write!(f, "{}", num),
-            Token::Comment(comment) => write!(f, "{}", comment),
         }
     }
 }

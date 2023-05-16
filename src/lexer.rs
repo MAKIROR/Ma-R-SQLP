@@ -1,7 +1,20 @@
-use super::datatype::{
-    token::*,
-    keyword::KeywordExt,
-};
+use super::datatype::token::*;
+
+fn collect_until<F>(chars: &mut std::iter::Peekable<std::str::Chars>, condition: F) -> String
+where
+    F: Fn(char, String) -> bool,
+{
+    let mut result = String::new();
+
+    while let Some(&c) = chars.peek() {
+        if condition(c, result.clone()) {
+            break;
+        }
+        result.push(c);
+        chars.next();
+    }
+    result
+}
 
 pub fn lex(text: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
@@ -11,11 +24,10 @@ pub fn lex(text: &str) -> Vec<Token> {
             ' ' | '\n' | '\r' | '\t' => {
                 chars.next();
             }
-            '-' if chars.peek().map_or(false, |&c| c == '-') => {
+            '-' if chars.nth(1).map_or(false, |c| c == '-') => {
                 chars.next();
                 chars.next();
-                let comment = collect_until(&mut chars, |c, _| c == '\n').trim().to_string();
-                tokens.push(Token::Comment(comment));
+                let _ = collect_until(&mut chars, |c, _| c == '\n').trim().to_string();
             }
             '\'' | '"' => {
                 if let Some(quote) = chars.next() {
@@ -29,16 +41,20 @@ pub fn lex(text: &str) -> Vec<Token> {
                 let text = collect_until(&mut chars, |c, _| !c.is_alphanumeric() && c != '_');
                 tokens.push(Token::Variable(text));
             }
-            token if token.is_terminator() => {
-                tokens.push(Token::Symbol(token.as_symbol().take().unwrap().clone()));
-                chars.next();
-            }
             token if token.is_ascii_digit() => {
                 let num = collect_until(&mut chars, |c, _| !c.is_ascii_digit() && c != '.');
                 tokens.push(Token::Number(num));
             }
             token if token.is_symbol() => {
-                let symbol = collect_until(&mut chars, |c, _| !c.is_symbol() || c.is_terminator() );
+                
+                let mut symbol = token.to_string();
+
+                if !token.has_next(&mut chars) {
+                    chars.next();
+                } else {
+                    symbol = collect_until(&mut chars, |c, _| !c.is_symbol() );
+                }
+
                 if let Some(s) = symbol.as_symbol() {
                     tokens.push(Token::Symbol(s));
                 }

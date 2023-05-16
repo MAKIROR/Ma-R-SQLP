@@ -32,10 +32,11 @@ pub enum Keyword {
 }
 
 pub fn to_keyword(s: &str) -> Option<Keyword> {
-    let mut iter = s.split_whitespace();
-    let first = iter.next()?.to_uppercase();
+    let string = s.to_uppercase();
+    let mut iter = string.split_whitespace();
+    let first = iter.next()?;
 
-    match first.as_str() {
+    match first {
         "SELECT" => Some(Keyword::Select),
         "INSERT" => Some(Keyword::Insert),
         "UPDATE" => Some(Keyword::Update),
@@ -133,25 +134,6 @@ impl fmt::Display for Keyword {
             Self::Or => write!(f, "OR"),
             Self::Asc => write!(f, "ASC"),
             Self::Desc => write!(f, "DESC")
-        }
-    }
-}
-
-pub trait KeywordExt {
-    fn has_suffix(&self) -> bool;
-}
-
-impl KeywordExt for String {
-    fn has_suffix(&self) -> bool {
-        match self.to_uppercase().as_str() {
-            "GROUP"
-            | "ORDER"
-            | "INNER"
-            | "LEFT"
-            | "OUTER"
-            | "RIGHT"
-            | "FULL" => true,
-            _ => false,
         }
     }
 }

@@ -22,18 +22,6 @@ pub fn to_function(s: &str) -> Option<FunctionT> {
     }
 }
 
-pub fn is_function(s: &str) -> bool {
-    match s.trim().to_uppercase().as_str() {
-        "SUM"
-        | "AVG"
-        | "COUNT"
-        | "MAX"
-        | "MIN"
-        | "CONCAT" => true,
-        _ => false
-    }
-}
-
 impl FunctionT {
     pub fn arg_len(&self) -> u8 {
         match self {

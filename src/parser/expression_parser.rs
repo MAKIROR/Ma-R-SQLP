@@ -63,7 +63,6 @@ pub fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition
             Token::Identifier(_) | Token::Variable(_) | Token::Function(_) => {
                 left = Some(parse_comparison(iter)?);
             }
-            Token::Comment(_) => (),
         }
     }
 

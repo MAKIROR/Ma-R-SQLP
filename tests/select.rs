@@ -6,7 +6,7 @@ fn test_insert() {
     let result = lex("
     SELECT DISTINCT name, age
         FROM students, teachers
-        WHERE @age = SUM(age) * 3 
+        WHERE @age = (1+2)*3 
         GROUP BY name, age 
         HAVING age > 14 
         ORDER BY name ASC, age DESC;
