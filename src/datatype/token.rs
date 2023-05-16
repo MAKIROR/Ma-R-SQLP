@@ -18,7 +18,6 @@ pub enum Token {
 pub trait SqlCharExt {
     fn is_symbol(&self) -> bool;
     fn as_symbol(&self) -> Option<Symbol>;
-    fn has_next(&self, chars: &mut std::iter::Peekable<std::str::Chars>) -> bool;
 }
 
 impl SqlCharExt for char {
@@ -34,18 +33,6 @@ impl SqlCharExt for char {
         }
         None
     }
-
-    fn has_next(&self, chars: &mut std::iter::Peekable<std::str::Chars>) -> bool {
-        match self {
-            '!' | '<' | '>' => {
-                if chars.nth(1).map_or(false, |c| c == '=') {
-                    return true;
-                }
-                return false;
-            }
-            _ => return false,
-        }
-    }
 }
 
 pub trait SqlStringExt {
@@ -54,7 +41,6 @@ pub trait SqlStringExt {
     fn as_keyword(&self) -> Option<Keyword>;
     fn as_symbol(&self) -> Option<Symbol>;
     fn as_function(&self) -> Option<FunctionT>;
-    fn has_suffix(&self) -> bool;
 }
 
 impl SqlStringExt for String {
@@ -87,18 +73,6 @@ impl SqlStringExt for String {
             return Some(function)
         }
         None
-    }
-    fn has_suffix(&self) -> bool {
-        match self.to_uppercase().as_str() {
-            "GROUP"
-            | "ORDER"
-            | "INNER"
-            | "LEFT"
-            | "OUTER"
-            | "RIGHT"
-            | "FULL" => true,
-            _ => false,
-        }
     }
 }
 

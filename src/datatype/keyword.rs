@@ -137,3 +137,22 @@ impl fmt::Display for Keyword {
         }
     }
 }
+
+pub trait KeywordExt {
+    fn has_suffix(&self) -> bool;
+}
+
+impl KeywordExt for String {
+    fn has_suffix(&self) -> bool {
+        match self.to_uppercase().as_str() {
+            "GROUP"
+            | "ORDER"
+            | "INNER"
+            | "LEFT"
+            | "OUTER"
+            | "RIGHT"
+            | "FULL" => true,
+            _ => false,
+        }
+    }
+}

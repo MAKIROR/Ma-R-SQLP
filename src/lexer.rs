@@ -1,4 +1,6 @@
 use super::datatype::token::*;
+use super::datatype::keyword::KeywordExt;
+use super::datatype::symbol::SymbolExtChar;
 
 fn collect_until<F>(chars: &mut std::iter::Peekable<std::str::Chars>, condition: F) -> String
 where

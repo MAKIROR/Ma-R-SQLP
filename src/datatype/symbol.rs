@@ -101,3 +101,21 @@ impl fmt::Display for Symbol {
         }
     }
 }
+
+pub trait SymbolExtChar {
+    fn has_next(&self, chars: &mut std::iter::Peekable<std::str::Chars>) -> bool;
+}
+
+impl SymbolExtChar for char {
+    fn has_next(&self, chars: &mut std::iter::Peekable<std::str::Chars>) -> bool {
+        match self {
+            '!' | '<' | '>' => {
+                if chars.nth(1).map_or(false, |c| c == '=') {
+                    return true;
+                }
+                return false;
+            }
+            _ => return false,
+        }
+    }
+}
