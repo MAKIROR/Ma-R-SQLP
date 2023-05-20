@@ -1,14 +1,12 @@
 use super::{
     super::datatype::symbol::Symbol,
+    structs::Statement,
     data::*,
 };
 
 #[derive(Debug, Clone)]
 pub enum NodeType {
-    Select,
-    Insert,
-    Delete,
-    Update,
+    Statement(Box<Statement>),
     Values,
     Symbol(Symbol),
     Value(Value),

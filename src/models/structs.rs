@@ -4,30 +4,26 @@ use super::{
     ast::*,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Select {
         distinct: bool,
         projections: Column,
-        table: Vec<String>,
+        table: Vec<(Expression, Option<Expression>)>,
         filter: Option<Condition>,
         group_by: Column,
         having: Option<Condition>,
         order_by: Option<Vec<(String, Sort)>>
     },
-    Insert {
-        table: String,
-        column_value: Vec<(String, String)>,
-    },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Column {
     AllColumns,
     Columns(Vec<(Expression, Option<Expression>)>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Sort {
     ASC,
     DESC
@@ -89,4 +85,3 @@ impl Expression {
         }
     }
 }
-

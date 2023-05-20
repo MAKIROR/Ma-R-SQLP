@@ -104,6 +104,19 @@ pub fn to_keyword(s: &str) -> Option<Keyword> {
     }
 }
 
+impl Keyword {
+    pub fn is_clause(&self) -> bool {
+        match self {
+            Self::From
+            | Self::Where
+            | Self::GroupBy
+            | Self::Having
+            | Self::OrderBy => true,
+            _ => false,
+        }
+    }
+}
+
 impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
