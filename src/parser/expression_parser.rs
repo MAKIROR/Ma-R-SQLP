@@ -72,6 +72,10 @@ pub fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition
     return Err(ParseError::IncorrectCondition);
 }
 
+pub fn parse_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
+    Ok(parse_next_term(iter)?)
+}
+
 fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
     let left = match iter.peek() {
         Some(Token::Identifier(ref s)) => Value::Identifier(s.clone()),
@@ -222,7 +226,6 @@ fn parse_function(iter: &mut Peekable<IntoIter<Token>>) -> Result<Function> {
     } else {
         return Err(ParseError::IncorrectArgCount(arg_len));
     }
-
 }
 
 fn match_token(value: &Option<Token>, expect: Token) -> Result<()> {

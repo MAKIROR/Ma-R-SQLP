@@ -24,7 +24,7 @@ pub enum Statement {
 #[derive(Debug)]
 pub enum Column {
     AllColumns,
-    Columns(Vec<String>),
+    Columns(Vec<(Expression, Option<Expression>)>),
 }
 
 #[derive(Debug)]

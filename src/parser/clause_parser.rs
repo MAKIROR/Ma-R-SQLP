@@ -38,19 +38,11 @@ pub fn parse_having(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condi
 }
 
 pub fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
-    let mut column_names = Vec::new();   
-
-    loop {
-        match iter.next() {
-            Some(Token::Identifier(name)) => column_names.push(name),
-            Some(Token::Symbol(Symbol::Asterisk)) => return Ok(Column::AllColumns),
-            Some(Token::Symbol(_)) => continue,
-            Some(Token::Keyword(_)) => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From)))
-        }
+    if let Some(Token::Symbol(Symbol::Asterisk)) = iter.peek() {
+        return Ok(Column::AllColumns);
     }
-    return Ok(Column::Columns(column_names));
+
+    parse_columns(iter)
 }
 
 pub fn parse_groupby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
@@ -60,23 +52,7 @@ pub fn parse_groupby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
     }
     iter.next();
 
-    let mut column_names = Vec::new();   
-    loop {
-        match iter.peek() {
-            Some(Token::Identifier(name)) => column_names.push(name.clone()),
-            Some(Token::Symbol(Symbol::Asterisk)) => return Ok(Column::AllColumns),
-            Some(Token::Symbol(Symbol::Comma)) => {
-                iter.next();
-                continue;
-            },
-            Some(Token::Keyword(Keyword::Having)) => break,
-            Some(token) if token.is_terminator() => break,
-            Some(token) => return Err(ParseError::UnexpectedToken(token.clone())),
-            None => return Err(ParseError::MissingColumn)
-        }
-        iter.next();
-    }
-    return Ok(Column::Columns(column_names));
+    parse_columns(iter)
 }
 
 pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<(String, Sort)>>> {
@@ -120,6 +96,12 @@ pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<
 }
 
 pub fn parse_tables(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>> {
+    match iter.peek() {
+        Some(Token::Keyword(Keyword::From)) => (),
+        _  => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From))),
+    }
+    iter.next();
+
     let mut tables = Vec::new();
     while let Some(token) = iter.peek() {
         match token {
@@ -140,4 +122,33 @@ pub fn parse_tables(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<String>>
     }
 
     Ok(tables)
+}
+
+fn parse_columns(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
+    let mut columns = Vec::new();
+
+    loop {
+        match iter.peek() {
+            Some(Token::Keyword(Keyword::From))
+            | Some(Token::Keyword(Keyword::Having))
+            | Some(Token::Keyword(Keyword::OrderBy)) => break,
+            _ => ()
+        }
+        match parse_expression(iter) {
+            Ok(e) => {
+                let mut alias = None;
+                if let Some(Token::Keyword(Keyword::As)) = iter.peek() {
+                    iter.next();
+                    alias = Some(parse_expression(iter)?);
+                }
+                columns.push((e, alias));
+                if let Some(Token::Symbol(Symbol::Comma)) = iter.peek() {
+                    iter.next();
+                }
+            },
+            Err(e) => return Err(e),
+        }
+    }
+
+    return Ok(Column::Columns(columns));
 }

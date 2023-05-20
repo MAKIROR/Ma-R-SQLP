@@ -4,11 +4,11 @@ use masql::parser::statement_parser::parse_select;
 #[test]
 fn test_insert() {
     let result = lex("
-    SELECT DISTINCT name, age
+    SELECT DISTINCT SUM(score) AS score, age
         FROM students, teachers
-        WHERE @age = (1+2)*3 
+        WHERE @age = (1+2) * SUM(score) 
         GROUP BY name, age 
-        HAVING age > 14 
+        HAVING age > 14
         ORDER BY name ASC, age DESC;
     ");
     println!("{:?}", result);
