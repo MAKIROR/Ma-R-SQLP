@@ -6,7 +6,6 @@ use super::{
     error::{ParseError, Result},
     super::{
         models::{
-            data::*,
             ast::*,
             structs::*,
         },
@@ -160,7 +159,7 @@ fn parse_primary(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
             Token::Number(ref s) => Ok(Expression::new_left(NodeType::Value(Value::Number(s.clone())))),
             Token::Function(_) => {
                 let function = parse_function(iter)?;
-                return Ok(Expression::new_left(NodeType::Function(function)));
+                return Ok(Expression::new_left(NodeType::Function(Box::new(function))));
             },
             Token::Symbol(Symbol::LeftParen) => {
                 iter.next();
@@ -199,25 +198,24 @@ fn parse_function(iter: &mut Peekable<IntoIter<Token>>) -> Result<Function> {
 
     match_token(&iter.next(), Token::Symbol(Symbol::LeftParen))?;
 
-    let mut args: Vec<Value> = Vec::new();
+    let mut args: Vec<Expression> = Vec::new();
 
     loop {
-        if let Some(v) = iter.peek() {
-            match v {
-                Token::Identifier(s) => args.push(Value::Identifier(s.clone())),
-                Token::Number(s) => args.push(Value::Number(s.clone())),
-                Token::Variable(s) => args.push(Value::Variable(s.clone())),
-                Token::Symbol(Symbol::RightParen) => {
+        match iter.peek() {
+            Some(Token::Symbol(Symbol::RightParen)) => break,
+            _ => ()
+        }
+        match parse_expression(iter) {
+            Ok(e) => {
+                args.push(e);
+                if let Some(Token::Symbol(Symbol::Comma)) = iter.peek() {
                     iter.next();
-                    break;
-                },
-                t => return Err(ParseError::UnexpectedToken(t.clone())),
-            }
-            iter.next();
-        } else {
-            return Err(ParseError::IncorrectFunction);
+                }
+            },
+            Err(e) => return Err(e),
         }
     }
+    iter.next();
 
     let arg_len = function.arg_len();
 

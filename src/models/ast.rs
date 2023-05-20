@@ -1,7 +1,9 @@
 use super::{
-    super::datatype::symbol::Symbol,
-    structs::Statement,
-    data::*,
+    super::datatype::{
+        symbol::Symbol,
+        function::FunctionT
+    },
+    structs::{Statement, Expression},
 };
 
 #[derive(Debug, Clone)]
@@ -10,7 +12,7 @@ pub enum NodeType {
     Values,
     Symbol(Symbol),
     Value(Value),
-    Function(Function),
+    Function(Box<Function>),
     ColumnValue(String, String)
 }
 
@@ -54,3 +56,33 @@ impl ASTNode {
         self.right = Some(Box::new(node));
     }
 } 
+
+#[derive(Debug, Clone)]
+pub enum Value {
+    Identifier(String),
+    Number(String),
+    Variable(String),
+}
+
+#[derive(Debug, Clone)]
+pub enum Function {
+    Sum(Expression),
+    Avg(Expression),
+    Count(Expression),
+    Max(Expression),
+    Min(Expression),
+    Concat(Vec<Expression>),
+}
+
+impl Function {
+    pub fn new(func: FunctionT, args: Vec<Expression>) -> Self {
+        match func {
+            FunctionT::Sum => Self::Sum(args[0].clone()),
+            FunctionT::Avg => Self::Avg(args[0].clone()),
+            FunctionT::Count => Self::Count(args[0].clone()),
+            FunctionT::Max => Self::Max(args[0].clone()),
+            FunctionT::Min => Self::Min(args[0].clone()),
+            FunctionT::Concat => Self::Concat(args.clone()),
+        }
+    }
+}

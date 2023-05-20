@@ -1,6 +1,5 @@
 use super::{
     super::datatype::symbol::Symbol,
-    data::*,
     ast::*,
 };
 
