@@ -4,6 +4,7 @@ use super::{
         function::FunctionT
     },
     structs::{Statement, Expression},
+    error::*,
 };
 
 #[derive(Debug, Clone)]
@@ -75,14 +76,22 @@ pub enum Function {
 }
 
 impl Function {
-    pub fn new(func: FunctionT, args: Vec<Expression>) -> Self {
-        match func {
+    pub fn new(function: FunctionT, args: Vec<Expression>) -> Result<Self> {
+        let arg_len = function.arg_len();
+        if (args.len() != arg_len.into() && arg_len != 0) || (arg_len == 0 && args.len() < 2) {
+            if arg_len == 0 {
+                return Err(StructError::ExpectMoreArg(2));
+            }
+            return Err(StructError::IncorrectArgCount(arg_len));
+        }
+
+        Ok(match function {
             FunctionT::Sum => Self::Sum(args[0].clone()),
             FunctionT::Avg => Self::Avg(args[0].clone()),
             FunctionT::Count => Self::Count(args[0].clone()),
             FunctionT::Max => Self::Max(args[0].clone()),
             FunctionT::Min => Self::Min(args[0].clone()),
             FunctionT::Concat => Self::Concat(args.clone()),
-        }
+        })
     }
 }

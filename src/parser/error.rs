@@ -1,5 +1,8 @@
 use thiserror::Error;
-use super::super::datatype::token::*;
+use super::super::{
+    datatype::token::*,
+    models::error::StructError,
+};
 
 
 #[derive(Error, Debug)]
@@ -37,9 +40,6 @@ pub enum ParseError {
     #[error("Incorrect number of values: expect {0}")]
     IncorrectValueCount(usize),
 
-    #[error("Incorrect number of args: expect {0}")]
-    IncorrectArgCount(u8),
-
     #[error("Incorrect expression")]
     IncorrectExpression,
 
@@ -48,6 +48,9 @@ pub enum ParseError {
 
     #[error("Incorrect function")]
     IncorrectFunction,
+
+    #[error("{0}")]
+    StructError(#[from] StructError),
 
     #[error("Unknown error")]
     UnknownError,

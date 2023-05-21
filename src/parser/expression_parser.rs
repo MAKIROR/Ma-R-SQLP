@@ -217,13 +217,7 @@ fn parse_function(iter: &mut Peekable<IntoIter<Token>>) -> Result<Function> {
     }
     iter.next();
 
-    let arg_len = function.arg_len();
-
-    if args.len() == arg_len.into() {
-        return Ok(Function::new(function, args));
-    } else {
-        return Err(ParseError::IncorrectArgCount(arg_len));
-    }
+    return Ok(Function::new(function, args)?);
 }
 
 fn match_token(value: &Option<Token>, expect: Token) -> Result<()> {
