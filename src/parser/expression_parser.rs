@@ -59,9 +59,10 @@ pub fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition
             Token::Symbol(_) | Token::Number(_) => {
                 return Err(ParseError::UnexpectedToken(token.clone()));
             }
-            Token::Identifier(_) | Token::Variable(_) | Token::Function(_) => {
+            Token::Identifier(_) | Token::Variable(_) | Token::Function(_) | Token::Bool(_) => {
                 left = Some(parse_comparison(iter)?);
             }
+            t => return Err(ParseError::UnexpectedToken(t.clone())),
         }
     }
 
@@ -72,22 +73,26 @@ pub fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition
 }
 
 pub fn parse_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
-    Ok(parse_next_term(iter)?)
+    parse_next_term(iter)
 }
 
 fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
     let left = match iter.peek() {
-        Some(Token::Identifier(ref s)) => Value::Identifier(s.clone()),
-        Some(Token::Variable(ref v)) => Value::Variable(v.clone()),
+        Some(Token::Identifier(_))
+        | Some(Token::Symbol(Symbol::LeftParen))
+        | Some(Token::Variable(_)) 
+        | Some(Token::Function(_)) => parse_next_term(iter)?,
+        Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
+        None => return Err(ParseError::MissingComparator),
+    };
+
+    let operator = match iter.peek() {
+        Some(Token::Symbol(t)) if t.is_comparator() => t.clone(),
+        Some(Token::Symbol(Symbol::LeftParen)) => Symbol::LeftParen,
         Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
         None => return Err(ParseError::MissingComparator),
     };
     iter.next();
-    let operator = match iter.next() {
-        Some(Token::Symbol(t)) if t.is_comparator() => t,
-        Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
-        None => return Err(ParseError::MissingComparator),
-    };
 
     let right = parse_next_term(iter)?;
 
@@ -108,6 +113,7 @@ pub fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expressio
             Token::Symbol(s) => s.clone(),
             _ => break,
         };
+
 
         match symbol {
             Symbol::Plus | Symbol::Minus => {
@@ -157,6 +163,7 @@ fn parse_primary(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
         let result = match token {
             Token::Identifier(ref s) => Ok(Expression::new_left(NodeType::Value(Value::Identifier(s.clone())))),
             Token::Number(ref s) => Ok(Expression::new_left(NodeType::Value(Value::Number(s.clone())))),
+            Token::Variable(ref v) => Ok(Expression::new_left(NodeType::Value(Value::Variable(v.clone())))),
             Token::Function(_) => {
                 let function = parse_function(iter)?;
                 return Ok(Expression::new_left(NodeType::Function(Box::new(function))));

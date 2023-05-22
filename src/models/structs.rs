@@ -40,7 +40,7 @@ pub enum Condition {
     },
     Not(Box<Condition>),
     Comparison {
-        left: Value,
+        left: Expression,
         operator: Symbol,
         right: Expression,
     }

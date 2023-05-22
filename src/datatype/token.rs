@@ -13,6 +13,8 @@ pub enum Token {
     Identifier(String),
     Variable(String),
     Number(String),
+    Bool(bool),
+    Null,
 }
 
 pub trait SqlCharExt {
@@ -41,6 +43,7 @@ pub trait SqlStringExt {
     fn as_keyword(&self) -> Option<Keyword>;
     fn as_symbol(&self) -> Option<Symbol>;
     fn as_function(&self) -> Option<FunctionT>;
+    fn as_bool(&self) -> Option<bool>;
 }
 
 impl SqlStringExt for String {
@@ -74,6 +77,14 @@ impl SqlStringExt for String {
         }
         None
     }
+    fn as_bool(&self) -> Option<bool> {
+        if self.to_uppercase() == "TRUE" {
+            return Some(true)
+        } else if self.to_uppercase() == "FALSE" {
+            return Some(false)
+        }
+        None
+    }
 }
 
 impl fmt::Display for Token {
@@ -85,6 +96,13 @@ impl fmt::Display for Token {
             Token::Identifier(identifier) => write!(f, "{}", identifier),
             Token::Variable(variable) => write!(f, "{}", variable),
             Token::Number(num) => write!(f, "{}", num),
+            Token::Bool(bool) => {
+                match bool {
+                    true => write!(f, "TRUE"),
+                    false => write!(f, "FALSE"),
+                }
+            }
+            Token::Null => write!(f, "Null"),
         }
     }
 }

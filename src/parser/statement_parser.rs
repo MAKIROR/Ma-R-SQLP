@@ -27,6 +27,7 @@ pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
         Keyword::Distinct => true,
         _ => false,
     };
+    iter.next();
     
     let projections = parse_projection(&mut iter)?;
     let table = parse_tables(&mut iter)?;

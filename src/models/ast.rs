@@ -63,6 +63,8 @@ pub enum Value {
     Identifier(String),
     Number(String),
     Variable(String),
+    Bool(bool),
+    Null,
 }
 
 #[derive(Debug, Clone)]

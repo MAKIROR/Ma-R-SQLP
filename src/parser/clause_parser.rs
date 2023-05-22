@@ -118,12 +118,12 @@ fn parse_items_with_alias(
     iter: &mut Peekable<IntoIter<Token>>
 ) -> Result<Vec<(Expression, Option<Expression>)>> 
 {
-
     let mut columns = Vec::new();
 
     loop {
         match iter.peek() {
             Some(Token::Keyword(k)) if k.is_clause() => break,
+            Some(s) if s.is_terminator() => break,
             _ => ()
         }
         match parse_expression(iter) {

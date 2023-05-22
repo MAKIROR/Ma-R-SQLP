@@ -21,6 +21,7 @@ where
 pub fn lex(text: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut chars = text.chars().peekable();
+
     while let Some(&token) = chars.peek() {
         match token {
             ' ' | '\n' | '\r' | '\t' => {
@@ -48,13 +49,12 @@ pub fn lex(text: &str) -> Vec<Token> {
                 tokens.push(Token::Number(num));
             }
             token if token.is_symbol() => {
-                
                 let mut symbol = token.to_string();
 
-                if !token.has_next(&mut chars) {
-                    chars.next();
+                if token.has_next(&mut chars) {
+                    symbol.push(chars.next().take().unwrap());
                 } else {
-                    symbol = collect_until(&mut chars, |c, _| !c.is_symbol() );
+                    chars.next();
                 }
 
                 if let Some(s) = symbol.as_symbol() {
@@ -67,6 +67,10 @@ pub fn lex(text: &str) -> Vec<Token> {
                     tokens.push(Token::Function(function));
                 } else if let Some(keyword) = text.as_keyword() {
                     tokens.push(Token::Keyword(keyword));
+                } else if let Some(bool) = text.as_bool() {
+                    tokens.push(Token::Bool(bool));
+                } else if text.to_uppercase() == "NULL" {
+                    tokens.push(Token::Null);
                 } else {
                     tokens.push(Token::Identifier(text));
                 }
