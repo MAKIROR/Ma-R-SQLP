@@ -5,8 +5,9 @@ use masql::parser::statement_parser::parse_select;
 fn test_insert() {
     let result = lex("
     SELECT DISTINCT SUM(score) AS score, age
+        -- test
         FROM students, teachers
-        WHERE @age = (1+2) * SUM(score) 
+        WHERE @age = (2-1) * SUM(score) 
         GROUP BY name, age 
         HAVING age > 14
         ORDER BY name ASC, age DESC;

@@ -1,6 +1,6 @@
 use super::datatype::token::*;
 use super::datatype::keyword::KeywordExt;
-use super::datatype::symbol::SymbolExtChar;
+use super::datatype::symbol::{Symbol, SymbolExtChar};
 
 fn collect_until<F>(chars: &mut std::iter::Peekable<std::str::Chars>, condition: F) -> String
 where
@@ -27,9 +27,14 @@ pub fn lex(text: &str) -> Vec<Token> {
             ' ' | '\n' | '\r' | '\t' => {
                 chars.next();
             }
-            '-' if chars.nth(1).map_or(false, |c| c == '-') => {
+            '-' => {
                 chars.next();
-                chars.next();
+                if let Some('-') = chars.peek() {
+                    chars.next();
+                } else {
+                    tokens.push(Token::Symbol(Symbol::Minus));
+                    continue;
+                }
                 let _ = collect_until(&mut chars, |c, _| c == '\n').trim().to_string();
             }
             '\'' | '"' => {
