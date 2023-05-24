@@ -10,11 +10,9 @@ use super::{
 #[derive(Debug, Clone)]
 pub enum NodeType {
     Statement(Box<Statement>),
-    Values,
     Symbol(Symbol),
     Value(Value),
     Function(Box<Function>),
-    ColumnValue(String, String)
 }
 
 #[derive(Debug, Clone)]

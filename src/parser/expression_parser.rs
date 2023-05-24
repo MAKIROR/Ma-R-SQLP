@@ -72,10 +72,6 @@ pub fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition
     return Err(ParseError::IncorrectCondition);
 }
 
-pub fn parse_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
-    parse_next_term(iter)
-}
-
 fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
     let left = match iter.peek() {
         Some(Token::Identifier(_))
@@ -105,8 +101,8 @@ fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
     )
 }
 
-pub fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
-    let mut left_expr = parse_next_factor(iter)?;
+pub fn parse_expression(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
+    let mut left_expr = parse_next_term(iter)?;
 
     while let Some(token) = iter.peek() {
         let symbol = match token {
@@ -118,7 +114,7 @@ pub fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expressio
         match symbol {
             Symbol::Plus | Symbol::Minus => {
                 iter.next();
-                let right_expr = parse_next_factor(iter)?;
+                let right_expr = parse_next_term(iter)?;
                 left_expr = Expression::new(
                     left_expr.ast,
                     symbol,
@@ -132,8 +128,8 @@ pub fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expressio
     Ok(left_expr)
 }
 
-fn parse_next_factor(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
-    let mut left_expr = parse_primary(iter)?;
+fn parse_next_term(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
+    let mut left_expr = parse_factor(iter)?;
 
     while let Some(token) = iter.peek() {
         let symbol = match token {
@@ -144,7 +140,7 @@ fn parse_next_factor(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression>
         match symbol {
             Symbol::Asterisk | Symbol::Slash => {
                 iter.next();
-                let right_expr = parse_primary(iter)?;
+                let right_expr = parse_factor(iter)?;
                 left_expr = Expression::new(
                     left_expr.ast,
                     symbol,
@@ -158,7 +154,7 @@ fn parse_next_factor(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression>
     Ok(left_expr)
 }
 
-fn parse_primary(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> { 
+fn parse_factor(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> { 
     if let Some(token) = iter.peek() {
         let result = match token {
             Token::Identifier(ref s) => Ok(Expression::new_left(NodeType::Value(Value::Identifier(s.clone())))),
@@ -170,7 +166,7 @@ fn parse_primary(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
             },
             Token::Symbol(Symbol::LeftParen) => {
                 iter.next();
-                let expr = parse_next_term(iter)?;
+                let expr = parse_expression(iter)?;
                 return match iter.next() {
                     Some(Token::Symbol(Symbol::RightParen)) => Ok(expr),
                     _ => Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen))),
@@ -179,7 +175,7 @@ fn parse_primary(iter: &mut Peekable<IntoIter<Token>>) -> Result<Expression> {
             Token::Symbol(Symbol::Plus) | Token::Symbol(Symbol::Minus) => {
                 let t = token.clone();
                 iter.next();
-                let expr = parse_primary(iter)?;
+                let expr = parse_factor(iter)?;
                 return Ok(Expression::new_unary_op(
                     t.as_symbol().take().unwrap(),
                     expr.ast
