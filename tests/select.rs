@@ -1,9 +1,9 @@
-use masql::lexer::lex;
-use masql::parser::statement_parser::parse_select;
+use masql::parse::Parser;
 
 #[test]
 fn test_insert() {
-    let result = lex("
+    let mut p = Parser::new();
+    let statement = p.parse("
     SELECT DISTINCT SUM(score) AS score, age
         -- test
         FROM students, teachers
@@ -12,11 +12,9 @@ fn test_insert() {
         HAVING age > 14
         ORDER BY name ASC, age DESC;
     ");
-    println!("{:?}", result);
-    let ast = parse_select(&result);
-    if let Err(e) = ast {
+    if let Err(e) = statement {
         println!("{}", e);
-    } else if let Ok(r) = ast {
+    } else if let Ok(r) = statement {
         println!("{:?}", r);
     }
 }

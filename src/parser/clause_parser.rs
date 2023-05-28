@@ -17,21 +17,19 @@ use super::{
 
 pub fn parse_where(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condition>> {
     match iter.peek() {
-        Some(Token::Keyword(Keyword::Where)) => (),
+        Some(Token::Keyword(Keyword::Where)) => iter.next(),
         _  => return Ok(None),
-    }
-    iter.next();
-
+    };
+    
     let condition = parse_condition(iter)?;
     return Ok(Some(condition))
 }
 
 pub fn parse_having(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condition>> {
     match iter.peek() {
-        Some(Token::Keyword(Keyword::Having)) => (),
+        Some(Token::Keyword(Keyword::Having)) => iter.next(),
         _  => return Ok(None),
-    }
-    iter.next();
+    };
 
     let condition = parse_condition(iter)?;
     return Ok(Some(condition))
@@ -39,6 +37,7 @@ pub fn parse_having(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Condi
 
 pub fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
     if let Some(Token::Symbol(Symbol::Asterisk)) = iter.peek() {
+        iter.next();
         return Ok(Column::AllColumns);
     }
 
@@ -47,20 +46,18 @@ pub fn parse_projection(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> 
 
 pub fn parse_groupby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
     match iter.peek() {
-        Some(Token::Keyword(Keyword::GroupBy)) => (),
+        Some(Token::Keyword(Keyword::GroupBy)) => iter.next(),
         _  => return Ok(Column::AllColumns),
-    }
-    iter.next();
+    };
 
     parse_columns(iter)
 }
 
 pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<(String, Sort)>>> {
     match iter.peek() {
-        Some(Token::Keyword(Keyword::OrderBy)) => (),
+        Some(Token::Keyword(Keyword::OrderBy)) => iter.next(),
         _  => return Ok(None),
-    }
-    iter.next();
+    };
 
     let mut order_by: Vec<(String, Sort)> = Vec::new();
 
@@ -143,4 +140,87 @@ fn parse_items_with_alias(
     }
 
     return Ok(columns);
+}
+
+fn parse_condition(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
+    let mut left: Option<Condition> = None;
+
+    while let Some(token) = iter.peek() {
+        match token {
+            Token::Keyword(Keyword::And)
+            | Token::Keyword(Keyword::Or)
+            | Token::Keyword(Keyword::Not) => {
+                let current_token = token.clone();
+                iter.next();
+                let next_condition = parse_condition(iter)?;
+                left = match current_token {
+                    Token::Keyword(Keyword::And) => {
+                        Some(Condition::And {
+                            left: Box::new(left.take().unwrap().clone()),
+                            right: Box::new(next_condition)
+                        })
+                    },
+                    Token::Keyword(Keyword::Or) => {
+                        Some(Condition::Or {
+                            left: Box::new(left.take().unwrap().clone()),
+                            right: Box::new(next_condition)
+                        })
+                    },
+                    Token::Keyword(Keyword::Not) => Some(Condition::Not(Box::new(next_condition))),
+                    _ => return Err(ParseError::UnknownError),
+                };
+            },
+            Token::Symbol(Symbol::LeftParen) => {
+                iter.next();
+                let next_condition = parse_condition(iter)?;
+                if let Some(Token::Symbol(Symbol::RightParen)) = iter.next() {
+                    left = Some(next_condition);
+                } else {
+                    return Err(ParseError::MissingToken(Token::Symbol(Symbol::RightParen)));
+                }
+            },
+            token if token.is_terminator() => break,
+            Token::Symbol(Symbol::RightParen) | Token::Keyword(_) => break,
+            Token::Symbol(_) | Token::Number(_) => {
+                return Err(ParseError::UnexpectedToken(token.clone()));
+            }
+            Token::Identifier(_) | Token::Variable(_) | Token::Function(_) | Token::Bool(_) => {
+                left = Some(parse_comparison(iter)?);
+            }
+            t => return Err(ParseError::UnexpectedToken(t.clone())),
+        }
+    }
+
+    if let Some(r) = left {
+        return Ok(r);
+    }
+    return Err(ParseError::IncorrectCondition);
+}
+
+fn parse_comparison(iter: &mut Peekable<IntoIter<Token>>) -> Result<Condition> {
+    let left = match iter.peek() {
+        Some(Token::Identifier(_))
+        | Some(Token::Symbol(Symbol::LeftParen))
+        | Some(Token::Variable(_)) 
+        | Some(Token::Function(_)) => parse_expression(iter)?,
+        Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
+        None => return Err(ParseError::MissingComparator),
+    };
+
+    let operator = match iter.peek() {
+        Some(Token::Symbol(t)) if t.is_comparator() => t.clone(),
+        Some(t) => return Err(ParseError::UnexpectedToken(t.clone())),
+        None => return Err(ParseError::MissingComparator),
+    };
+    iter.next();
+
+    let right = parse_expression(iter)?;
+
+    Ok(
+        Condition::Comparison {
+            left,
+            operator,
+            right,
+        }
+    )
 }

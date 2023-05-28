@@ -4,7 +4,6 @@ use super::super::{
     models::error::StructError,
 };
 
-
 #[derive(Error, Debug)]
 pub enum ParseError {
     #[error("Unexpected token: '{0}'")]

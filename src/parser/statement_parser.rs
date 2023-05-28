@@ -18,23 +18,20 @@ use super::{
     },
 };
 
-pub fn parse_select(t: &Vec<Token>) -> Result<Statement> {
-    let tokens = t.clone();
-    let mut iter = tokens.into_iter().peekable();
-
+pub fn parse_select(iter: &mut Peekable<IntoIter<Token>>) -> Result<Statement> {
     match_token(&iter.next(), Token::Keyword(Keyword::Select))?;
-    let distinct = match parse_optional_args_or(&mut iter, vec![Keyword::All, Keyword::Distinct], Keyword::All) {
+    
+    let distinct = match parse_optional_args_or(iter, vec![Keyword::All, Keyword::Distinct], Keyword::All) {
         Keyword::Distinct => true,
         _ => false,
     };
-    iter.next();
     
-    let projections = parse_projection(&mut iter)?;
-    let table = parse_tables(&mut iter)?;
-    let filter = parse_where(&mut iter)?;
-    let group_by = parse_groupby(&mut iter)?;
-    let having = parse_having(&mut iter)?;
-    let order_by = parse_orderby(&mut iter)?;
+    let projections = parse_projection(iter)?;
+    let table = parse_tables(iter)?;
+    let filter = parse_where(iter)?;
+    let group_by = parse_groupby(iter)?;
+    let having = parse_having(iter)?;
+    let order_by = parse_orderby(iter)?;
 
     if let Some(terminator) = iter.next() {
         if !terminator.is_terminator() {
