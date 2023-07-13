@@ -53,7 +53,9 @@ pub fn parse_groupby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Column> {
     parse_columns(iter)
 }
 
-pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<(String, Sort)>>> {
+pub fn parse_orderby(
+    iter: &mut Peekable<IntoIter<Token>>
+) -> Result<Option<Vec<(String, Sort)>>> {
     match iter.peek() {
         Some(Token::Keyword(Keyword::OrderBy)) => iter.next(),
         _  => return Ok(None),
@@ -92,7 +94,9 @@ pub fn parse_orderby(iter: &mut Peekable<IntoIter<Token>>) -> Result<Option<Vec<
     return Ok(Some(order_by));
 }
 
-pub fn parse_tables(iter: &mut Peekable<IntoIter<Token>>) -> Result<Vec<(Expression, Option<Expression>)>> {
+pub fn parse_tables(
+    iter: &mut Peekable<IntoIter<Token>>
+) -> Result<Vec<(Expression, Option<Expression>)>> {
     match iter.peek() {
         Some(Token::Keyword(Keyword::From)) => (),
         _  => return Err(ParseError::MissingToken(Token::Keyword(Keyword::From))),
